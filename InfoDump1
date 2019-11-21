@@ -1,0 +1,131 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CNN1
+{
+    class NN
+    {
+        string layers { get; set; }
+        List<Layer> Layers { get; set; }
+    }
+    public class Neuron
+    {
+        public List<double> Weights { get; set; }
+        public List<double> WeightMomentum { get; set; }
+        public List<double> WeightGradient { get; set; }
+        public double Bias { get; set; }
+        public double BiasMomentum { get; set; }
+        public double BiasGradient { get; set; }
+        public double Value { get; set; }
+        public double ZVal { get; set; }
+        public double Error { get; set; }
+    }
+    class ActivationFunctions
+    {
+        public static double Tanh(double number)
+        {
+            return (Math.Pow(Math.E, 2 * number) - 1) / (Math.Pow(Math.E, 2 * number) + 1);
+        }
+        public static double TanhDerriv(double number)
+        {
+            return (1 - Math.Pow(Tanh(number), 2));
+        }
+    }
+    class Layer
+    {
+        double AvgGradient { get; set; }
+        List<Neuron> Neurons { get; set; }
+        public void RunLayer(string type, List<double> input)
+        {
+            Calculate(input);
+            switch (type)
+            {
+                case "input":
+                    /*run code*/
+                    break;
+                case "pool":
+                    break;
+                case "convolve":
+                    break;
+                case "hidden":
+                    break;
+                case "output":
+                    break;
+                default: throw new Exception("Invalid layer type");
+            }
+        }
+        void Descend(int batchsize)
+        {
+            foreach (Neuron n in Neurons)
+            {
+                for (int i = 0; i < n.Weights.Count; i++)
+                {
+                    double gradient = n.WeightGradient[i] * (-2d / batchsize);
+                    n.Weights[i] -= gradient;
+                    AvgGradient -= gradient;
+                }
+            }
+            AvgGradient /= Neurons.Count;
+        }
+        void Descend(Layer input, double momentum, double learningrate)
+        {
+            foreach (Neuron n in Neurons)
+            {
+                //Foreach weight in n.weights
+                for (int i = 0; i < n.Weights.Count; i++)
+                {
+                    foreach (Neuron n2 in input.Neurons)
+                    {
+                        //Weight gradients
+                        double wgradient = learningrate * n2.Value * ActivationFunctions.TanhDerriv(n.ZVal) * n.Error;
+                        n.WeightMomentum[i] = (n.WeightMomentum[i] * momentum) - (learningrate * wgradient);
+                        n.WeightGradient[i] += wgradient + n.WeightMomentum[i];
+                    }
+                }
+                //Bias gradients
+                double bgradient = learningrate * ActivationFunctions.TanhDerriv(n.ZVal) * n.Error;
+                n.BiasMomentum = (n.BiasMomentum * momentum) - (learningrate * bgradient);
+                n.BiasGradient += bgradient + n.BiasMomentum;
+            }
+        }
+        void Backprop(Layer output)
+        {
+            foreach(Neuron n in output.Neurons)
+            {
+                for(int i = 0; i < Neurons.Count; i++)
+                {
+                    Neurons[i].Error += n.Weights[i] * ActivationFunctions.TanhDerriv(n.ZVal) * n.Error;
+                }
+            }
+        }
+        void Backprop(int correct)
+        {
+            for (int i = 0; i < Neurons.Count; i++)
+            {
+                Neurons[i].Error = 2d * ((i == correct ? 1d : 0d) - Neurons[i].Value);
+            }
+        }
+        void Calculate(List<double> input)
+        {
+            foreach (Neuron n in Neurons)
+            {
+                for (int i = 0; i < input.Count; i++)
+                {
+                    n.ZVal += ((n.Weights[i] + n.WeightMomentum[i]) * input[i]) + n.Bias + n.BiasMomentum;
+                }
+                n.Value = ActivationFunctions.Tanh(n.ZVal);
+            }
+        }
+        double[,] Convolve()
+        {
+            
+        }
+        double [,] Pool()
+        {
+
+        }
+    }
+}
