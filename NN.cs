@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,7 +25,7 @@ namespace CNN1
         double Momentum = .9;
         double LearningRate = .000146;
 
-        public double TrialNum = 0;
+        public int TrialNum = 1;
         public double AvgGradient = 0;
         public double PercCorrect = 0;
         public double Error = 0;
@@ -112,22 +112,29 @@ namespace CNN1
                     if (i == 0) { Layers[i].Descend(input, Momentum, LearningRate); continue; }
                     Layers[i].Descend(Layers[i - 1].ZVals, Momentum, LearningRate, i == Layers.Count - 1);
                 }
-
-                //Report values
-                double avg = 0;
-                foreach (Layer l in Layers) { l.Descend(batchsize, LearningRate); avg += l.AvgGradient; }
-                int guess = -1; double certainty = -5; double error = 0;
-                for (int i = 0; i < ONCount; i++)
-                {
-                    if (Layers[Layers.Count - 1].Values[i] > certainty) { guess = i; certainty = Layers[Layers.Count - 1].Values[i]; }
-                    error += ((i == correct ? 1d : 0d) - Layers[Layers.Count - 1].Values[i]) * ((i == correct ? 1d : 0d) - Layers[Layers.Count - 1].Values[i]);
-                }
-                avg /= Layers.Count;
-                TrialNum++;
-                AvgGradient = (AvgGradient * ((TrialNum) / (TrialNum + 1))) + (avg * (1 / (TrialNum)));
-                PercCorrect = (PercCorrect * ((TrialNum) / (TrialNum + 1))) + ((guess == correct) ? (1 / (TrialNum)) : 0d);
-                Error = (Error * ((TrialNum) / (TrialNum + 1))) + (error * (1 / (TrialNum)));
+                UI(correct);
             }
+            //Batch descend
+            foreach (Layer l in Layers) { l.Descend(batchsize, LearningRate); }
+        }
+        public void UI(int correct)
+        {
+            double avggrad = 0;
+            foreach (Layer l in Layers) { avggrad += l.AvgGradient; }
+            AvgGradient = (AvgGradient * ((TrialNum) / (TrialNum + 1))) + (avggrad * (1 / (TrialNum)));
+
+            int guess = -1; double certainty = -99;
+            for (int i = 0; i < ONCount; i++)
+            { if (Layers[Layers.Count - 1].Values[i] > certainty)
+                { guess = i; certainty = Layers[Layers.Count - 1].Values[i]; }}
+            PercCorrect = (PercCorrect * ((TrialNum) / (TrialNum + 1))) + ((guess == correct) ? (1 / (TrialNum)) : 0d);
+
+            double error = 0;
+            for (int i = 0; i < ONCount; i++)
+            { error += Math.Pow(((i == correct ? 1d : 0d) - Layers[Layers.Count - 1].Values[i]), 2); }
+            Error = (Error * ((TrialNum) / (TrialNum + 1))) + (error * (1 / (TrialNum)));
+
+            TrialNum++;
         }
     }
     class ActivationFunctions
@@ -217,17 +224,14 @@ namespace CNN1
                 {
                     double gradient = learningrate * WeightGradient[i, ii] * (-2d / batchsize);
                     Weights[i, ii] -= gradient;
-                    AvgGradient -= gradient;
                 }
                 Biases[i] -= learningrate * BiasGradient[i] * (-2d / batchsize);
             }
-            AvgGradient /= Weights.Length;
         }
         public void Descend(double[] input, double momentum, double learningrate, bool output)
         {
             WeightGradient = new double[Length, InputLength];
             BiasGradient = new double[Length];
-
             for (int i = 0; i < Length; i++)
             {
                 for (int ii = 0; ii < InputLength; ii++)
@@ -236,6 +240,7 @@ namespace CNN1
                     double wgradient = input[ii] * ActivationFunctions.TanhDerriv(ZVals[i]) * Errors[i];
                     WeightMomentum[i, ii] = (WeightMomentum[i, ii] * momentum) - (learningrate * wgradient);
                     WeightGradient[i, ii] += wgradient + WeightMomentum[i, ii];
+                    AvgGradient -= wgradient;
                 }
                 if (output) { continue; }
                 //Bias gradients
@@ -243,6 +248,7 @@ namespace CNN1
                 BiasMomentum[i] = (BiasMomentum[i] * momentum) - (learningrate * bgradient);
                 BiasGradient[i] += bgradient + BiasMomentum[i];
             }
+            AvgGradient /= Weights.Length;
         }
         public void Descend(double[,] input, double momentum, double learningrate)
         {
@@ -288,7 +294,7 @@ namespace CNN1
         {
             double[] input2 = new double[input.Length];
             int iterator = 0;
-            foreach(double d in input) { input2[iterator] = d; iterator++; }
+            foreach (double d in input) { input2[iterator] = d; iterator++; }
             Calculate(input2, false);
         }
     }
