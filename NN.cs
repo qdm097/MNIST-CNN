@@ -77,6 +77,7 @@ namespace CNN1
         {
             double[,] input = Reader.ReadNextImage();
             int correct = Reader.ReadNextLabel();
+
             //Forward
             for (int i = 0; i < Layers.Count; i++)
             {
@@ -105,7 +106,7 @@ namespace CNN1
                 error += ((i == correct ? 1d : 0d) - Layers[Layers.Count - 1].Values[i]) * ((i == correct ? 1d : 0d) - Layers[Layers.Count - 1].Values[i]);
             }
             TrialNum++;
-           
+
             PercCorrect = (PercCorrect * ((TrialNum) / (TrialNum + 1))) + ((guess == correct) ? (1 / (TrialNum)) : 0d);
             Error = (Error * ((TrialNum) / (TrialNum + 1))) + (error * (1 / (TrialNum)));
         }
@@ -119,6 +120,7 @@ namespace CNN1
                 numneurons += l.Values.Length;
             }
             tempavg /= numneurons * batchsize;
+            if (TrialNum == 0) { TrialNum++; }
             AvgGradient = (AvgGradient * ((TrialNum) / (TrialNum + 1))) + (tempavg * (1 / (TrialNum)));
         }
     }
@@ -272,10 +274,13 @@ namespace CNN1
             {
                 for (int j = 0; j < InputLength; j++)
                 {
-                    if (output) { ZVals[k] = ((Weights[k, j] + WeightMomentum[k, j]) * input[j]); }
-                    else { ZVals[k] = ((Weights[k, j] + WeightMomentum[k, j]) * input[j]) + Biases[k] + BiasMomentum[k]; }
+                    ZVals[k] += ((Weights[k, j] + WeightMomentum[k, j]) * input[j]);
                 }
-                if (!output) { Values[k] = ActivationFunctions.Tanh(ZVals[k]); }
+                if (!output)
+                {
+                    ZVals[k] += Biases[k] + BiasMomentum[k];
+                    Values[k] = ActivationFunctions.Tanh(ZVals[k]);
+                }
                 else { Values[k] = ZVals[k]; }
             }
         }
@@ -283,7 +288,7 @@ namespace CNN1
         {
             double[] input2 = new double[input.Length];
             int iterator = 0;
-            foreach(double d in input) { input2[iterator] = d; iterator++; }
+            foreach (double d in input) { input2[iterator] = d; iterator++; }
             Calculate(input2, false);
         }
     }
