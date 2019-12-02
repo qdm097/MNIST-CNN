@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -20,13 +20,16 @@ namespace CNN1
         {
             new Thread(() =>
             {
-                Thread.CurrentThread.IsBackground = true;
                 while (Run)
                 {
+                    for (int i = 0; i < BatchSize; i++) { nn.Run(); }
                     nn.Run(BatchSize);
-                    AvgGradTxt.Invoke((Action) delegate { AvgGradTxt.Text = Math.Round(nn.AvgGradient, 15).ToString(); });
-                    AvgCorrectTxt.Invoke((Action)delegate { AvgCorrectTxt.Text = Math.Round(nn.PercCorrect, 15).ToString(); });
-                    ErrorTxt.Invoke((Action)delegate { ErrorTxt.Text = Math.Round(nn.Error, 15).ToString(); });
+
+                    Invoke((Action)delegate {
+                        AvgGradTxt.Text = Math.Round(nn.AvgGradient, 15).ToString();
+                        AvgCorrectTxt.Text = Math.Round(nn.PercCorrect, 15).ToString();
+                        ErrorTxt.Text = Math.Round(nn.Error, 15).ToString();
+                    });
                 }
                 Data.Write(nn);
             }).Start();
@@ -53,6 +56,7 @@ namespace CNN1
 
         private void Button3_Click(object sender, EventArgs e)
         {
+            if (Run) { MessageBox.Show("Cannot reset while running"); return; }
             nn.Init();
             Data.Write(nn);
         }
