@@ -11,13 +11,13 @@ namespace CNN1
     {
         //Must be 1 for now
         static int Resolution = 28;
-        public int NumConvPools = 0;
+        public int NumConvPools = 1;
         public int NumLayers = 3;
-        public int INCount = 28;
-        public int NCount = 15;
+        public int INCount = 10;
+        public int NCount = 10;
         public int ONCount = 10;
-        public int ConvSteps = 3;
-        public int PoolSize = 1;
+        public int ConvSteps = 2;
+        public int PoolSize = 2;
         public int KernelSize = 3;
         public List<Convolution> Convolutions { get; set; }
         public List<Pooling> Poolings { get; set; }
@@ -45,7 +45,7 @@ namespace CNN1
                 if (NumConvPools == 0) { lowercount = Resolution * Resolution; }
                 for (int ii = 0; ii < NumConvPools; ii++)
                 {
-                    lowercount = (int)Math.Pow(((lowercount / ConvSteps) - KernelSize), 2) / PoolSize;
+                    lowercount = (((lowercount / ConvSteps) - KernelSize) / PoolSize) + 1;
                 }
                 if (i != 0) { lowercount = Layers[i - 1].Length; count = NCount; }
                 if (i == 0) { count = INCount; }
@@ -63,6 +63,8 @@ namespace CNN1
             }
             for (int i = 0; i < NumConvPools; i++)
             {
+                //Lowercount IS A TEMP VALUE FOR WHEN CONVOLVECOUNT = 1!
+                lowercount = (lowercount / ConvSteps);
                 Convolutions[i].Kernel = new double[KernelSize, KernelSize];
                 for (int ii = 0; ii < KernelSize; ii++)
                 {
@@ -75,10 +77,18 @@ namespace CNN1
         }
         public void Run()
         {
-            double[,] input = Reader.ReadNextImage();
+            double[,] image = Reader.ReadNextImage();
+            double[,] input = new double[28, 28];
+            //Deepclone?
+            for(int i = 0; i < 28; i++) { for (int ii = 0; ii < 28; ii++) { input[i, ii] = image[i, ii]; } }
             int correct = Reader.ReadNextLabel();
 
             //Forward
+            for (int i = 0; i < NumConvPools; i++)
+            {
+                input = Convolutions[i].Convolve(input, ConvSteps);
+                input = Poolings[i].Pool(input, PoolSize);
+            }
             for (int i = 0; i < Layers.Count; i++)
             {
                 if (i == 0) { Layers[i].Calculate(input); continue; }
@@ -90,8 +100,24 @@ namespace CNN1
                 if (i == Layers.Count - 1) { Layers[i].Backprop(correct); continue; }
                 Layers[i].Backprop(Layers[i + 1]);
             }
+            for (int i = NumConvPools - 1; i >= 0; i--)
+            {
+                if (i == 0)
+                {
+                    Poolings[i].Backprop(Layers[0]);
+                    Convolutions[i].Backprop(Poolings[i], PoolSize);
+                }
+                else
+                {
+                    //Undefined for now
+                }
+            }
             //Descend
             //Need a convolution descent loop
+            for (int i = 0; i < NumConvPools; i++)
+            {
+                Convolutions[i].Descend(image, Momentum, LearningRate);
+            }
             for (int i = 0; i < Layers.Count; i++)
             {
                 if (i == 0) { Layers[i].Descend(input, Momentum, LearningRate); continue; }
@@ -113,6 +139,10 @@ namespace CNN1
         public void Run(int batchsize)
         {
             double tempavg = 0; int numneurons = 0;
+            foreach (Convolution c in Convolutions)
+            {
+                c.Descend(batchsize, LearningRate);
+            }
             foreach (Layer l in Layers)
             {
                 l.Descend(batchsize, LearningRate);
