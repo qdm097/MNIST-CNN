@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,19 +12,65 @@ namespace CNN1
         public int KernelSize { get; set; }
         double[,] Errors { get; set; }
         double[,] Gradients { get; set; }
+        double[,] Momentums { get; set; }
         public Convolution(int kernelsize)
         {
             KernelSize = kernelsize;
             Kernel = new double[KernelSize, KernelSize];
+            Momentums = new double[KernelSize, KernelSize];
         }
-        public void Backprop(Pooling p, int poolsize)
+        public void Descend(int batchsize, double learningrate)
+        {
+            for (int i = 0; i < KernelSize; i++)
+            {
+                for (int ii = 0; ii < KernelSize; ii++)
+                {
+                    Kernel[i, ii] -= learningrate * Gradients[i, ii] *(-2d / batchsize);
+                }
+            }
+        }
+        public void Descend(double[,] input, double momentum, double learningrate)
+        {
+            Gradients = new double[KernelSize, KernelSize];
+            for (int i = 0; i < KernelSize; i++)
+            {
+                for (int ii = 0; ii < KernelSize; ii++)
+                {
+                    for (int j = 0; j < input.GetLength(0); j++)
+                    {
+                        for (int jj = 0; jj < input.GetLength(1); jj++)
+                        {
+                            Gradients[i, ii] +=
+                                input[j, jj] * Errors[i, ii]
+                                * ActivationFunctions.TanhDerriv(Kernel[i, ii] * input[j, jj]);
+                        }
+                    }
+                    Momentums[i, ii] = (Momentums[i, ii] * momentum) - (learningrate * Gradients[i, ii]);
+                    Gradients[i, ii] += Momentums[i, ii];
+                }
+            }
+        }
+        public void Backprop(Pooling p, int poolsize, int step)
         {
             Errors = new double[KernelSize, KernelSize];
-            for (int i = 0; i < Errors.GetLength(0); i++)
+            for (int i = 0; i < KernelSize; i++)
             {
-                for (int ii = 0; ii < Errors.GetLength(1); ii++)
+                for (int ii = 0; ii < KernelSize; ii++)
                 {
-                    Errors[i, ii] = p.Errors[i / poolsize, ii / poolsize];
+                    for (int k = 0; k < length; k++)
+                    {
+                        for (int kk = 0; kk < width; kk++)
+                        {
+                            for (int j = 0; j < p.Errors.GetLength(0); j++)
+                            {
+                                for (int jj = 0; jj < p.Errors.GetLength(1); jj++)
+                                {
+                                    //No idea if this is right
+                                    Errors[i, ii] += p.Errors[(k * step) + j, (ii * step) + jj];
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -42,7 +88,7 @@ namespace CNN1
                         for (int jj = 0; jj < Kernel.GetLength(1); jj++)
                         {
                             //Check this
-                            output[i, ii] += input[(i * step) + j, (ii * step) + jj] * (Kernel[j, jj]);
+                            output[i, ii] += input[(i * step) + j, (ii * step) + jj] * (Kernel[j, jj] + Momentums[j, jj]);
                         }
                     }
                     output[i, ii] = ActivationFunctions.Tanh(output[i, ii]);
@@ -56,28 +102,31 @@ namespace CNN1
         int length { get; set; }
         int width { get; set; }
         public double[,] Errors { get; set; }
-        public void Backprop(Layer l)
+        public double[,] Mask { get; set; }
+        public void Backprop(Layer l, int pool)
         {
-            Errors = new double[length, width];
-            for (int k = 0; k < l.Values.GetLength(0); k++)
+            Errors = new double[Mask.GetLength(0), Mask.GetLength(1)];
+            for (int k = 0; k < Errors.GetLength(0); k++)
             {
-                for (int j = 0; j < width; j++)
+                for (int j = 0; j < Errors.GetLength(1); j++)
                 {
-                    Errors[j / l.Weights.GetLength(0), j % l.Weights.GetLength(0)] += l.Weights[k, j] * ActivationFunctions.TanhDerriv(l.ZVals[k]) * l.Errors[k];
+                    Errors[k, j] += Mask[k, j] * l.Weights[k, j] * ActivationFunctions.TanhDerriv(l.ZVals[k]) * l.Errors[k];
                 }
             }
         }
         public double[,] Pool(double[,] input, int pool)
         {
-            length = input.GetLength(0) / pool;
-            width = input.GetLength(1) / pool;
+            length = (input.GetLength(0) / pool) + 1;
+            width = (input.GetLength(1) / pool) + 1;
             double[,] output = new double[length, width];
+            Mask = new double[input.GetLength(0), input.GetLength(1)];
             for (int i = 0; i < input.GetLength(0); i++)
             {
                 for (int ii = 0; ii < input.GetLength(1); ii++)
                 {
-                    if (output[i / pool, ii / pool] < input[i, ii])
+                    if (output[i / pool, ii / pool] < input[i, ii] || output[i / pool, ii / pool] == 0)
                     {
+                        Mask[i, ii] = 1;
                         output[i / pool, ii / pool] = input[i, ii];
                     }
                 }
