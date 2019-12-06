@@ -48,7 +48,7 @@ namespace CNN1
                     lowercount = (((lowercount / ConvSteps) - KernelSize) / PoolSize) + 1;
                 }
                 if (i != 0) { lowercount = Layers[i - 1].Length; count = NCount; }
-                if (i == 0) { count = INCount; }
+                if (i == 0) { count = INCount; lowercount *= lowercount; }
                 if (i == NumLayers - 1) { count = ONCount; }
                 Layers.Add(new Layer(count, lowercount));
                 for (int j = 0; j < count; j++)
@@ -104,8 +104,8 @@ namespace CNN1
             {
                 if (i == 0)
                 {
-                    Poolings[i].Backprop(Layers[0]);
-                    Convolutions[i].Backprop(Poolings[i], PoolSize);
+                    Poolings[i].Backprop(Layers[0], PoolSize);
+                    Convolutions[i].Backprop(Poolings[i]);
                 }
                 else
                 {
