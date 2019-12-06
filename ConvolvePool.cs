@@ -13,6 +13,7 @@ namespace CNN1
         double[,] Errors { get; set; }
         double[,] Gradients { get; set; }
         double[,] Momentums { get; set; }
+        double[,] Zvals { get; set; }
         public Convolution(int kernelsize)
         {
             KernelSize = kernelsize;
@@ -50,32 +51,29 @@ namespace CNN1
                 }
             }
         }
-        public void Backprop(Pooling p, int poolsize, int step)
+        public void Backprop(Pooling p)
         {
-            Errors = new double[KernelSize, KernelSize];
-            for (int i = 0; i < KernelSize; i++)
-            {
-                for (int ii = 0; ii < KernelSize; ii++)
-                {
-                    for (int k = 0; k < length; k++)
-                    {
-                        for (int kk = 0; kk < width; kk++)
-                        {
-                            for (int j = 0; j < p.Errors.GetLength(0); j++)
-                            {
-                                for (int jj = 0; jj < p.Errors.GetLength(1); jj++)
-                                {
-                                    //No idea if this is right
-                                    Errors[i, ii] += p.Errors[(k * step) + j, (ii * step) + jj];
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            Errors = p.Errors;
+            //Errors = new double[KernelSize, KernelSize];
+            //for (int i = 0; i < Zvals.GetLength(0); i++)
+            //{
+            //    for (int ii = 0; ii < Zvals.GetLength(1); ii++)
+            //    {
+            //        for (int j = 0; j < KernelSize; j++)
+            //        {
+            //            for (int jj = 0; jj < KernelSize; jj++)
+            //            {
+            //                //Check this
+            //                Errors[j, jj] += ActivationFunctions.TanhDerriv(Zvals[(i * step) + jj, (ii * step) + j]) * p.Errors[i, ii];
+            //            }
+            //        }
+            //    }
+            //}
         }
+        //Crosscorrelate not convolve
         public double[,] Convolve(double[,] input, int step)
         {
+            Zvals = input;
             int length = (input.GetLength(0) / step) - Kernel.GetLength(0);
             int width = (input.GetLength(1) / step) - Kernel.GetLength(1);
             double[,] output = new double[length, width];
@@ -105,12 +103,31 @@ namespace CNN1
         public double[,] Mask { get; set; }
         public void Backprop(Layer l, int pool)
         {
+            //Calc 1d errors
+            double[] smallerrors = new double[l.InputLength];
             Errors = new double[Mask.GetLength(0), Mask.GetLength(1)];
-            for (int k = 0; k < Errors.GetLength(0); k++)
+            for (int k = 0; k < l.Length; k++)
             {
-                for (int j = 0; j < Errors.GetLength(1); j++)
+                for (int j = 0; j < l.InputLength; j++)
                 {
-                    Errors[k, j] += Mask[k, j] * l.Weights[k, j] * ActivationFunctions.TanhDerriv(l.ZVals[k]) * l.Errors[k];
+                    smallerrors[j] += l.Weights[k, j] * ActivationFunctions.TanhDerriv(l.ZVals[k]) * l.Errors[k];
+                }
+            }
+            //Convert to 2d array
+            double[,] convertederrors = new double[(Mask.GetLength(0) / pool) + 1, (Mask.GetLength(1) / pool) + 1];
+            for (int i = 0; i < (int)Math.Sqrt(smallerrors.Length); i++)
+            {
+                for (int ii = 0; ii < (int)Math.Sqrt(smallerrors.Length); ii++)
+                {
+                    convertederrors[i, ii] = smallerrors[(i * (int)Math.Sqrt(smallerrors.Length)) + ii];
+                }
+            }
+            //Compute errors for pool
+            for (int i = 0; i < Mask.GetLength(0); i++)
+            {
+                for (int ii = 0; ii < Mask.GetLength(1); ii++)
+                {
+                    Errors[i, ii] = Mask[i, ii] * convertederrors[i / pool, ii / pool];
                 }
             }
         }
