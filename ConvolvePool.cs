@@ -30,22 +30,48 @@ namespace CNN1
                 }
             }
         }
-        public void Descend(double[,] input, double momentum, double learningrate)
+        public void Descend(double[,] input, double momentum, double learningrate, int step)
         {
             Gradients = new double[KernelSize, KernelSize];
+            int length = (input.GetLength(0) / step) - Kernel.GetLength(0);
+            int width = (input.GetLength(1) / step) - Kernel.GetLength(1);
+            //for (int i = 0; i < KernelSize; i++)
+            //{
+            //    for (int ii = 0; ii < KernelSize; ii++)
+            //    {
+            //        for (int j = 0; j < length; j++)
+            //        {
+            //            for (int jj = 0; jj < width; jj++)
+            //            {
+            //                Gradients[i, ii] +=
+            //                    input[(i * step) + j, (ii * step) + jj] * Errors[i, ii]
+            //                    * ActivationFunctions.TanhDerriv(Zvals[i, ii]);
+            //            }
+            //        }
+            //        Momentums[i, ii] = (Momentums[i, ii] * momentum) - (learningrate * Gradients[i, ii]);
+            //        Gradients[i, ii] += Momentums[i, ii];
+            //    }
+            //}
+            for (int i = 0; i < length; i++)
+            {
+                for (int ii = 0; ii < width; ii++)
+                {
+                    for (int j = 0; j < KernelSize; j++)
+                    {
+                        for (int jj = 0; jj < KernelSize; jj++)
+                        {
+                            //Check this
+                            Gradients[j, jj] += input[(i * step) + j, (ii * step) + jj] 
+                                * Errors[j, jj]
+                                * ActivationFunctions.TanhDerriv(Zvals[j, jj]);
+                        }
+                    }
+                }
+            }
             for (int i = 0; i < KernelSize; i++)
             {
                 for (int ii = 0; ii < KernelSize; ii++)
                 {
-                    for (int j = 0; j < input.GetLength(0); j++)
-                    {
-                        for (int jj = 0; jj < input.GetLength(1); jj++)
-                        {
-                            Gradients[i, ii] +=
-                                input[j, jj] * Errors[i, ii]
-                                * ActivationFunctions.TanhDerriv(Kernel[i, ii] * input[j, jj]);
-                        }
-                    }
                     Momentums[i, ii] = (Momentums[i, ii] * momentum) - (learningrate * Gradients[i, ii]);
                     Gradients[i, ii] += Momentums[i, ii];
                 }
@@ -81,9 +107,9 @@ namespace CNN1
             {
                 for (int ii = 0; ii < width; ii++)
                 {
-                    for (int j = 0; j < Kernel.GetLength(0); j++)
+                    for (int j = 0; j < KernelSize; j++)
                     {
-                        for (int jj = 0; jj < Kernel.GetLength(1); jj++)
+                        for (int jj = 0; jj < KernelSize; jj++)
                         {
                             //Check this
                             output[i, ii] += input[(i * step) + j, (ii * step) + jj] * (Kernel[j, jj] + Momentums[j, jj]);
