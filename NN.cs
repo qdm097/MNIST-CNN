@@ -29,7 +29,7 @@ namespace CNN1
         public double AvgGradient = 0;
         public double PercCorrect = 0;
         public double Error = 0;
-        public double Guess { get; set; }
+        public int Guess { get; set; }
         public void Init()
         {
             Convolutions = new List<Convolution>();
@@ -75,13 +75,11 @@ namespace CNN1
                 }
             }
         }
-        public void Run()
+        public void Run(double[,] image, int correct)
         {
-            double[,] image = Reader.ReadNextImage();
             double[,] input = new double[28, 28];
             //Deepclone?
             for(int i = 0; i < 28; i++) { for (int ii = 0; ii < 28; ii++) { input[i, ii] = image[i, ii]; } }
-            int correct = Reader.ReadNextLabel();
 
             //Forward
             for (int i = 0; i < NumConvPools; i++)
@@ -116,7 +114,7 @@ namespace CNN1
             //Need a convolution descent loop
             for (int i = 0; i < NumConvPools; i++)
             {
-                Convolutions[i].Descend(image, Momentum, LearningRate);
+                Convolutions[i].Descend(image, Momentum, LearningRate, ConvSteps);
             }
             for (int i = 0; i < Layers.Count; i++)
             {
@@ -125,15 +123,15 @@ namespace CNN1
             }
 
             //Report values
-            int guess = -1; double certainty = -5; double error = 0;
+            Guess = -1; double certainty = -5; double error = 0;
             for (int i = 0; i < ONCount; i++)
             {
-                if (Layers[Layers.Count - 1].Values[i] > certainty) { guess = i; certainty = Layers[Layers.Count - 1].Values[i]; }
+                if (Layers[Layers.Count - 1].Values[i] > certainty) { Guess = i; certainty = Layers[Layers.Count - 1].Values[i]; }
                 error += ((i == correct ? 1d : 0d) - Layers[Layers.Count - 1].Values[i]) * ((i == correct ? 1d : 0d) - Layers[Layers.Count - 1].Values[i]);
             }
             TrialNum++;
 
-            PercCorrect = (PercCorrect * ((TrialNum) / (TrialNum + 1))) + ((guess == correct) ? (1 / (TrialNum)) : 0d);
+            PercCorrect = (PercCorrect * ((TrialNum) / (TrialNum + 1))) + ((Guess == correct) ? (1 / (TrialNum)) : 0d);
             Error = (Error * ((TrialNum) / (TrialNum + 1))) + (error * (1 / (TrialNum)));
         }
         public void Run(int batchsize)
