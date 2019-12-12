@@ -11,10 +11,10 @@ namespace CNN1
     {
         //Must be 1 for now
         static int Resolution = 28;
-        public int NumConvPools = 1;
+        public int NumConvPools = 0;
         public int NumLayers = 3;
-        public int INCount = 10;
-        public int NCount = 10;
+        public int INCount = 28;
+        public int NCount = 17;
         public int ONCount = 10;
         public int ConvSteps = 2;
         public int PoolSize = 2;
@@ -24,6 +24,9 @@ namespace CNN1
         public List<Layer> Layers { get; set; }
         static double Momentum = .9;
         static double LearningRate = .000146;
+        static double RMSDecay = .9;
+        static bool UseMomentum = false;
+        static bool UseRMSProp = true;
 
         public double TrialNum = 0;
         public double AvgGradient = 0;
@@ -46,9 +49,10 @@ namespace CNN1
                 for (int ii = 0; ii < NumConvPools; ii++)
                 {
                     lowercount = (((lowercount / ConvSteps) - KernelSize) / PoolSize) + 1;
+                    if (ii == NumConvPools - 1) { lowercount *= lowercount; }
                 }
                 if (i != 0) { lowercount = Layers[i - 1].Length; count = NCount; }
-                if (i == 0) { count = INCount; lowercount *= lowercount; }
+                if (i == 0) { count = INCount; }
                 if (i == NumLayers - 1) { count = ONCount; }
                 Layers.Add(new Layer(count, lowercount));
                 for (int j = 0; j < count; j++)
@@ -118,8 +122,8 @@ namespace CNN1
             }
             for (int i = 0; i < Layers.Count; i++)
             {
-                if (i == 0) { Layers[i].Descend(input, Momentum, LearningRate); continue; }
-                Layers[i].Descend(Layers[i - 1].Values, Momentum, LearningRate, i == Layers.Count - 1);
+                if (i == 0) { Layers[i].Descend(input, Momentum, LearningRate, UseMomentum); continue; }
+                Layers[i].Descend(Layers[i - 1].Values, Momentum, LearningRate, i == Layers.Count - 1, UseMomentum);
             }
 
             //Report values
@@ -143,7 +147,7 @@ namespace CNN1
             }
             foreach (Layer l in Layers)
             {
-                l.Descend(batchsize, LearningRate);
+                l.Descend(batchsize, LearningRate, RMSDecay, UseRMSProp);
                 tempavg += l.AvgGradient;
                 numneurons += l.Values.Length;
             }
@@ -211,9 +215,11 @@ namespace CNN1
     class Layer
     {
         public double[,] Weights { get; set; }
+        double[,] WRMSGrad { get; set; }
         double[,] WeightMomentum { get; set; }
         double[,] WeightGradient { get; set; }
         public double[] Biases { get; set; }
+        double[] BRMSGrad { get; set; }
         double[] BiasMomentum { get; set; }
         double[] BiasGradient { get; set; }
         public double[] Values { get; set; }
@@ -230,51 +236,83 @@ namespace CNN1
             Weights = new double[Length, InputLength];
             WeightGradient = new double[Length, InputLength];
             WeightMomentum = new double[Length, InputLength];
+            WRMSGrad = new double[Length, InputLength];
 
             Biases = new double[Length];
             BiasGradient = new double[Length];
             BiasMomentum = new double[Length];
+            BRMSGrad = new double[Length];
         }
-        public void Descend(int batchsize, double learningrate)
+        public void Descend(int batchsize, double learningrate, double RMSDecay, bool useRMS)
         {
             AvgGradient = 0;
-            for (int i = 0; i < Length; i++)
+            if (!useRMS)
             {
-                for (int ii = 0; ii < InputLength; ii++)
+                
+                for (int i = 0; i < Length; i++)
                 {
-                    double gradient = learningrate * WeightGradient[i, ii] * (-2d / batchsize);
-                    Weights[i, ii] -= gradient;
-                    AvgGradient -= gradient;
+                    for (int ii = 0; ii < InputLength; ii++)
+                    {
+                        double gradient = learningrate * WeightGradient[i, ii] * (-2d / batchsize);
+                        Weights[i, ii] -= gradient;
+                        AvgGradient -= gradient;
+                    }
+                    Biases[i] -= learningrate * BiasGradient[i] * (-2d / batchsize);
                 }
-                Biases[i] -= learningrate * BiasGradient[i] * (-2d / batchsize);
+                WeightGradient = new double[Length, InputLength];
+                BiasGradient = new double[Length];
+
             }
-            WeightGradient = new double[Length, InputLength];
-            BiasGradient = new double[Length];
+            else
+            {
+                for (int i = 0; i < Length; i++)
+                {
+                    for (int ii = 0; ii < InputLength; ii++)
+                    {
+                        double gradient = WeightGradient[i, ii] * (-2d / batchsize);
+                        WRMSGrad[i, ii] = (WRMSGrad[i, ii] * RMSDecay) + ((1 - RMSDecay) * (gradient * gradient));
+                        double update = (learningrate / Math.Sqrt(WRMSGrad[i, ii])) * gradient;
+                        Weights[i, ii] -= update;
+                        AvgGradient -= update;
+                    }
+                    double bgradient = BiasGradient[i] * (-2d / batchsize);
+                    BRMSGrad[i] = (BRMSGrad[i] * RMSDecay) + ((1 - RMSDecay) * (bgradient * bgradient));
+                    Biases[i] -= (learningrate / Math.Sqrt(BRMSGrad[i])) * bgradient;
+                }
+                WeightGradient = new double[Length, InputLength];
+                BiasGradient = new double[Length];
+            }
         }
-        public void Descend(double[] input, double momentum, double learningrate, bool output)
+        public void Descend(double[] input, double momentum, double learningrate, bool output, bool usemomentum)
         {
             for (int i = 0; i < Length; i++)
             {
                 for (int ii = 0; ii < InputLength; ii++)
                 {
                     //Weight gradients
-                    double wgradient = input[ii] * ActivationFunctions.TanhDerriv(ZVals[i]) * Errors[i];
-                    WeightMomentum[i, ii] = (WeightMomentum[i, ii] * momentum) - (learningrate * wgradient);
-                    WeightGradient[i, ii] += wgradient + WeightMomentum[i, ii];
+                    WeightGradient[i, ii] = input[ii] * ActivationFunctions.TanhDerriv(ZVals[i]) * Errors[i];
+                    if (usemomentum)
+                    {
+                        WeightMomentum[i, ii] = (WeightMomentum[i, ii] * momentum) - (learningrate * WeightGradient[i, ii]);
+                        WeightGradient[i, ii] += WeightMomentum[i, ii];
+                    }
                 }
                 if (output) { continue; }
                 //Bias gradients
-                double bgradient = ActivationFunctions.TanhDerriv(ZVals[i]) * Errors[i];
-                BiasMomentum[i] = (BiasMomentum[i] * momentum) - (learningrate * bgradient);
-                BiasGradient[i] += bgradient + BiasMomentum[i];
+                BiasGradient[i] = ActivationFunctions.TanhDerriv(ZVals[i]) * Errors[i];
+                if (usemomentum)
+                {
+                    BiasMomentum[i] = (BiasMomentum[i] * momentum) - (learningrate * BiasGradient[i]);
+                    BiasGradient[i] += BiasMomentum[i];
+                }
             }
         }
-        public void Descend(double[,] input, double momentum, double learningrate)
+        public void Descend(double[,] input, double momentum, double learningrate, bool usemomentum)
         {
             double[] input2 = new double[input.Length];
             int iterator = 0;
             foreach (double d in input) { input2[iterator] = d; iterator++; }
-            Descend(input2, momentum, learningrate, false);
+            Descend(input2, momentum, learningrate, false, usemomentum);
         }
         public void Backprop(Layer output)
         {
