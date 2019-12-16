@@ -31,25 +31,36 @@ namespace CNN1
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.checkBox2 = new System.Windows.Forms.CheckBox();
+            this.TestCheck = new System.Windows.Forms.CheckBox();
             this.AvgGradTxt = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.GuessTxt = new System.Windows.Forms.TextBox();
             this.button3 = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
-            this.textBox3 = new System.Windows.Forms.TextBox();
+            this.LayersTxt = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.textBox4 = new System.Windows.Forms.TextBox();
+            this.ConvPoolsTxt = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
-            this.textBox5 = new System.Windows.Forms.TextBox();
+            this.BetaTxt = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
-            this.textBox6 = new System.Windows.Forms.TextBox();
+            this.AlphaTxt = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.AvgCorrectTxt = new System.Windows.Forms.TextBox();
             this.button4 = new System.Windows.Forms.Button();
             this.label8 = new System.Windows.Forms.Label();
             this.ErrorTxt = new System.Windows.Forms.TextBox();
+            this.RMSCheck = new System.Windows.Forms.CheckBox();
+            this.MomentumCheck = new System.Windows.Forms.CheckBox();
+            this.INCountTxt = new System.Windows.Forms.TextBox();
+            this.HidCountTxt = new System.Windows.Forms.TextBox();
+            this.OutCountTxt = new System.Windows.Forms.TextBox();
+            this.label9 = new System.Windows.Forms.Label();
+            this.label10 = new System.Windows.Forms.Label();
+            this.label11 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
+            this.RMSDecayTxt = new System.Windows.Forms.TextBox();
+            this.label13 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -85,20 +96,21 @@ namespace CNN1
             this.pictureBox1.TabIndex = 2;
             this.pictureBox1.TabStop = false;
             // 
-            // checkBox2
+            // TestCheck
             // 
-            this.checkBox2.AutoSize = true;
-            this.checkBox2.Location = new System.Drawing.Point(340, 315);
-            this.checkBox2.Margin = new System.Windows.Forms.Padding(2);
-            this.checkBox2.Name = "checkBox2";
-            this.checkBox2.Size = new System.Drawing.Size(47, 17);
-            this.checkBox2.TabIndex = 4;
-            this.checkBox2.Text = "Test";
-            this.checkBox2.UseVisualStyleBackColor = true;
+            this.TestCheck.AutoSize = true;
+            this.TestCheck.Location = new System.Drawing.Point(340, 315);
+            this.TestCheck.Margin = new System.Windows.Forms.Padding(2);
+            this.TestCheck.Name = "TestCheck";
+            this.TestCheck.Size = new System.Drawing.Size(47, 17);
+            this.TestCheck.TabIndex = 4;
+            this.TestCheck.Text = "Test";
+            this.TestCheck.UseVisualStyleBackColor = true;
+            this.TestCheck.CheckedChanged += new System.EventHandler(this.TestCheck_CheckedChanged);
             // 
             // AvgGradTxt
             // 
-            this.AvgGradTxt.Location = new System.Drawing.Point(88, 191);
+            this.AvgGradTxt.Location = new System.Drawing.Point(88, 26);
             this.AvgGradTxt.Margin = new System.Windows.Forms.Padding(2);
             this.AvgGradTxt.Name = "AvgGradTxt";
             this.AvgGradTxt.ReadOnly = true;
@@ -108,7 +120,7 @@ namespace CNN1
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(86, 175);
+            this.label1.Location = new System.Drawing.Point(86, 10);
             this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(69, 13);
@@ -118,7 +130,7 @@ namespace CNN1
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(464, 356);
+            this.label2.Location = new System.Drawing.Point(350, 346);
             this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(37, 13);
@@ -127,7 +139,7 @@ namespace CNN1
             // 
             // GuessTxt
             // 
-            this.GuessTxt.Location = new System.Drawing.Point(432, 372);
+            this.GuessTxt.Location = new System.Drawing.Point(331, 363);
             this.GuessTxt.Margin = new System.Windows.Forms.Padding(2);
             this.GuessTxt.Name = "GuessTxt";
             this.GuessTxt.ReadOnly = true;
@@ -136,7 +148,7 @@ namespace CNN1
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(592, 144);
+            this.button3.Location = new System.Drawing.Point(510, 6);
             this.button3.Margin = new System.Windows.Forms.Padding(2);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(96, 40);
@@ -148,79 +160,80 @@ namespace CNN1
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(589, 191);
+            this.label3.Location = new System.Drawing.Point(519, 156);
             this.label3.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(38, 13);
             this.label3.TabIndex = 11;
             this.label3.Text = "Layers";
             // 
-            // textBox3
+            // LayersTxt
             // 
-            this.textBox3.Location = new System.Drawing.Point(592, 206);
-            this.textBox3.Margin = new System.Windows.Forms.Padding(2);
-            this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(70, 20);
-            this.textBox3.TabIndex = 10;
+            this.LayersTxt.Location = new System.Drawing.Point(522, 171);
+            this.LayersTxt.Margin = new System.Windows.Forms.Padding(2);
+            this.LayersTxt.Name = "LayersTxt";
+            this.LayersTxt.Size = new System.Drawing.Size(70, 20);
+            this.LayersTxt.TabIndex = 10;
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(589, 229);
+            this.label4.Location = new System.Drawing.Point(519, 194);
             this.label4.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(75, 13);
             this.label4.TabIndex = 13;
             this.label4.Text = "Convs + Pools";
             // 
-            // textBox4
+            // ConvPoolsTxt
             // 
-            this.textBox4.Location = new System.Drawing.Point(592, 243);
-            this.textBox4.Margin = new System.Windows.Forms.Padding(2);
-            this.textBox4.Name = "textBox4";
-            this.textBox4.Size = new System.Drawing.Size(70, 20);
-            this.textBox4.TabIndex = 12;
+            this.ConvPoolsTxt.Location = new System.Drawing.Point(522, 208);
+            this.ConvPoolsTxt.Margin = new System.Windows.Forms.Padding(2);
+            this.ConvPoolsTxt.Name = "ConvPoolsTxt";
+            this.ConvPoolsTxt.Size = new System.Drawing.Size(70, 20);
+            this.ConvPoolsTxt.TabIndex = 12;
             // 
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(589, 304);
+            this.label5.Location = new System.Drawing.Point(86, 226);
             this.label5.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(59, 13);
+            this.label5.Size = new System.Drawing.Size(0, 13);
             this.label5.TabIndex = 17;
-            this.label5.Text = "Momentum";
             // 
-            // textBox5
+            // BetaTxt
             // 
-            this.textBox5.Location = new System.Drawing.Point(592, 318);
-            this.textBox5.Margin = new System.Windows.Forms.Padding(2);
-            this.textBox5.Name = "textBox5";
-            this.textBox5.Size = new System.Drawing.Size(70, 20);
-            this.textBox5.TabIndex = 16;
+            this.BetaTxt.Location = new System.Drawing.Point(89, 239);
+            this.BetaTxt.Margin = new System.Windows.Forms.Padding(2);
+            this.BetaTxt.Name = "BetaTxt";
+            this.BetaTxt.Size = new System.Drawing.Size(70, 20);
+            this.BetaTxt.TabIndex = 16;
+            this.BetaTxt.TextChanged += new System.EventHandler(this.BetaTxt_TextChanged);
             // 
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(589, 266);
+            this.label6.Location = new System.Drawing.Point(86, 261);
             this.label6.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(74, 13);
             this.label6.TabIndex = 15;
             this.label6.Text = "Learning Rate";
             // 
-            // textBox6
+            // AlphaTxt
             // 
-            this.textBox6.Location = new System.Drawing.Point(592, 281);
-            this.textBox6.Margin = new System.Windows.Forms.Padding(2);
-            this.textBox6.Name = "textBox6";
-            this.textBox6.Size = new System.Drawing.Size(70, 20);
-            this.textBox6.TabIndex = 14;
+            this.AlphaTxt.Location = new System.Drawing.Point(89, 276);
+            this.AlphaTxt.Margin = new System.Windows.Forms.Padding(2);
+            this.AlphaTxt.Name = "AlphaTxt";
+            this.AlphaTxt.Size = new System.Drawing.Size(70, 20);
+            this.AlphaTxt.TabIndex = 14;
+            this.AlphaTxt.TextChanged += new System.EventHandler(this.AlphaTxt_TextChanged);
             // 
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(86, 261);
+            this.label7.Location = new System.Drawing.Point(86, 96);
             this.label7.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(52, 13);
@@ -229,7 +242,7 @@ namespace CNN1
             // 
             // AvgCorrectTxt
             // 
-            this.AvgCorrectTxt.Location = new System.Drawing.Point(88, 277);
+            this.AvgCorrectTxt.Location = new System.Drawing.Point(88, 112);
             this.AvgCorrectTxt.Margin = new System.Windows.Forms.Padding(2);
             this.AvgCorrectTxt.Name = "AvgCorrectTxt";
             this.AvgCorrectTxt.ReadOnly = true;
@@ -238,7 +251,7 @@ namespace CNN1
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(88, 306);
+            this.button4.Location = new System.Drawing.Point(88, 141);
             this.button4.Margin = new System.Windows.Forms.Padding(2);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(132, 23);
@@ -250,7 +263,7 @@ namespace CNN1
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(86, 219);
+            this.label8.Location = new System.Drawing.Point(86, 54);
             this.label8.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(29, 13);
@@ -259,37 +272,154 @@ namespace CNN1
             // 
             // ErrorTxt
             // 
-            this.ErrorTxt.Location = new System.Drawing.Point(88, 236);
+            this.ErrorTxt.Location = new System.Drawing.Point(88, 71);
             this.ErrorTxt.Margin = new System.Windows.Forms.Padding(2);
             this.ErrorTxt.Name = "ErrorTxt";
             this.ErrorTxt.ReadOnly = true;
             this.ErrorTxt.Size = new System.Drawing.Size(134, 20);
             this.ErrorTxt.TabIndex = 21;
             // 
+            // RMSCheck
+            // 
+            this.RMSCheck.AutoSize = true;
+            this.RMSCheck.Location = new System.Drawing.Point(89, 170);
+            this.RMSCheck.Margin = new System.Windows.Forms.Padding(2);
+            this.RMSCheck.Name = "RMSCheck";
+            this.RMSCheck.Size = new System.Drawing.Size(71, 17);
+            this.RMSCheck.TabIndex = 23;
+            this.RMSCheck.Text = "RMSprop";
+            this.RMSCheck.UseVisualStyleBackColor = true;
+            this.RMSCheck.CheckedChanged += new System.EventHandler(this.RMSCheck_CheckedChanged);
+            // 
+            // MomentumCheck
+            // 
+            this.MomentumCheck.AutoSize = true;
+            this.MomentumCheck.Location = new System.Drawing.Point(89, 222);
+            this.MomentumCheck.Margin = new System.Windows.Forms.Padding(2);
+            this.MomentumCheck.Name = "MomentumCheck";
+            this.MomentumCheck.Size = new System.Drawing.Size(78, 17);
+            this.MomentumCheck.TabIndex = 24;
+            this.MomentumCheck.Text = "Momentum";
+            this.MomentumCheck.UseVisualStyleBackColor = true;
+            this.MomentumCheck.CheckedChanged += new System.EventHandler(this.MomentumCheck_CheckedChanged);
+            // 
+            // INCountTxt
+            // 
+            this.INCountTxt.Location = new System.Drawing.Point(522, 63);
+            this.INCountTxt.Margin = new System.Windows.Forms.Padding(2);
+            this.INCountTxt.Name = "INCountTxt";
+            this.INCountTxt.Size = new System.Drawing.Size(70, 20);
+            this.INCountTxt.TabIndex = 25;
+            // 
+            // HidCountTxt
+            // 
+            this.HidCountTxt.Location = new System.Drawing.Point(522, 100);
+            this.HidCountTxt.Margin = new System.Windows.Forms.Padding(2);
+            this.HidCountTxt.Name = "HidCountTxt";
+            this.HidCountTxt.Size = new System.Drawing.Size(70, 20);
+            this.HidCountTxt.TabIndex = 26;
+            // 
+            // OutCountTxt
+            // 
+            this.OutCountTxt.Location = new System.Drawing.Point(522, 137);
+            this.OutCountTxt.Margin = new System.Windows.Forms.Padding(2);
+            this.OutCountTxt.Name = "OutCountTxt";
+            this.OutCountTxt.ReadOnly = true;
+            this.OutCountTxt.Size = new System.Drawing.Size(70, 20);
+            this.OutCountTxt.TabIndex = 27;
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(519, 122);
+            this.label9.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(70, 13);
+            this.label9.TabIndex = 28;
+            this.label9.Text = "Output Count";
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(519, 85);
+            this.label10.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(72, 13);
+            this.label10.TabIndex = 29;
+            this.label10.Text = "Hidden Count";
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(519, 48);
+            this.label11.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(62, 13);
+            this.label11.TabIndex = 30;
+            this.label11.Text = "Input Count";
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(502, 348);
+            this.label12.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(0, 13);
+            this.label12.TabIndex = 32;
+            // 
+            // RMSDecayTxt
+            // 
+            this.RMSDecayTxt.Location = new System.Drawing.Point(89, 191);
+            this.RMSDecayTxt.Margin = new System.Windows.Forms.Padding(2);
+            this.RMSDecayTxt.Name = "RMSDecayTxt";
+            this.RMSDecayTxt.Size = new System.Drawing.Size(70, 20);
+            this.RMSDecayTxt.TabIndex = 31;
+            this.RMSDecayTxt.TextChanged += new System.EventHandler(this.RMSDecayTxt_TextChanged);
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(48, 283);
+            this.label13.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(0, 13);
+            this.label13.TabIndex = 33;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(642, 395);
+            this.ClientSize = new System.Drawing.Size(713, 395);
+            this.Controls.Add(this.label13);
+            this.Controls.Add(this.label12);
+            this.Controls.Add(this.RMSDecayTxt);
+            this.Controls.Add(this.label11);
+            this.Controls.Add(this.label10);
+            this.Controls.Add(this.label9);
+            this.Controls.Add(this.OutCountTxt);
+            this.Controls.Add(this.HidCountTxt);
+            this.Controls.Add(this.INCountTxt);
+            this.Controls.Add(this.MomentumCheck);
+            this.Controls.Add(this.RMSCheck);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.ErrorTxt);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.AvgCorrectTxt);
             this.Controls.Add(this.label5);
-            this.Controls.Add(this.textBox5);
+            this.Controls.Add(this.BetaTxt);
             this.Controls.Add(this.label6);
-            this.Controls.Add(this.textBox6);
+            this.Controls.Add(this.AlphaTxt);
             this.Controls.Add(this.label4);
-            this.Controls.Add(this.textBox4);
+            this.Controls.Add(this.ConvPoolsTxt);
             this.Controls.Add(this.label3);
-            this.Controls.Add(this.textBox3);
+            this.Controls.Add(this.LayersTxt);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.GuessTxt);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.AvgGradTxt);
-            this.Controls.Add(this.checkBox2);
+            this.Controls.Add(this.TestCheck);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
@@ -307,24 +437,35 @@ namespace CNN1
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.PictureBox pictureBox1;
-        private System.Windows.Forms.CheckBox checkBox2;
+        private System.Windows.Forms.CheckBox TestCheck;
         private System.Windows.Forms.TextBox AvgGradTxt;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox GuessTxt;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.TextBox textBox3;
+        private System.Windows.Forms.TextBox LayersTxt;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.TextBox textBox4;
+        private System.Windows.Forms.TextBox ConvPoolsTxt;
         private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.TextBox textBox5;
+        private System.Windows.Forms.TextBox BetaTxt;
         private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.TextBox textBox6;
+        private System.Windows.Forms.TextBox AlphaTxt;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.TextBox AvgCorrectTxt;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.TextBox ErrorTxt;
+        private System.Windows.Forms.CheckBox RMSCheck;
+        private System.Windows.Forms.CheckBox MomentumCheck;
+        private System.Windows.Forms.TextBox INCountTxt;
+        private System.Windows.Forms.TextBox HidCountTxt;
+        private System.Windows.Forms.TextBox OutCountTxt;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.TextBox RMSDecayTxt;
+        private System.Windows.Forms.Label label13;
     }
 }
