@@ -15,7 +15,7 @@ namespace CNN1
         bool Run = false;
         public static int[,] image = new int[28, 28];
         int iterator = 0;
-        int BatchSize = 5;
+        int BatchSize = 1;
         NN nn = new NN();
         void Learn()
         {
@@ -49,7 +49,18 @@ namespace CNN1
         public Form1()
         {
             InitializeComponent();
-            try { Data.Read(nn); }
+            try { nn = Data.Read();
+                INCountTxt.Text = nn.INCount.ToString();
+                HidCountTxt.Text = nn.NCount.ToString();
+                OutCountTxt.Text = nn.ONCount.ToString();
+                LayersTxt.Text = nn.NumLayers.ToString();
+                ConvPoolsTxt.Text = nn.NumConvPools.ToString();
+                AlphaTxt.Text = NN.LearningRate.ToString();
+                BetaTxt.Text = NN.Momentum.ToString();
+                RMSDecayTxt.Text = NN.RMSDecay.ToString();
+                RMSCheck.Checked = NN.UseRMSProp;
+                MomentumCheck.Checked = NN.UseMomentum;
+            }
             catch { MessageBox.Show("Failed to load data; reset to default"); Data.Running = false; nn.Init(); }
         }
 
@@ -68,6 +79,18 @@ namespace CNN1
         private void Button3_Click(object sender, EventArgs e)
         {
             if (Run) { MessageBox.Show("Cannot reset while running"); return; }
+            OutCountTxt.Text = "10";
+            if (
+                !double.TryParse(BetaTxt.Text, out double momentum)
+                || !double.TryParse(AlphaTxt.Text, out double learningrate)
+                || !int.TryParse(LayersTxt.Text, out int layercount)
+                || !int.TryParse(ConvPoolsTxt.Text, out int convpoolcount)
+                || !int.TryParse(INCountTxt.Text, out int incount)
+                || !int.TryParse(HidCountTxt.Text, out int hidcount)
+                || !int.TryParse(OutCountTxt.Text, out int outcount)
+                )
+            { MessageBox.Show("Invalid parameters"); return; }
+            nn = new NN(momentum, learningrate, layercount, incount, hidcount, outcount);
             nn.Init();
             Data.Write(nn);
         }
@@ -159,6 +182,42 @@ namespace CNN1
                 newImage.Palette = pal;
             }
             return newImage;
+        }
+
+        private void RMSCheck_CheckedChanged(object sender, EventArgs e)
+        {
+            NN.UseRMSProp = RMSCheck.Checked;
+        }
+
+        private void MomentumCheck_CheckedChanged(object sender, EventArgs e)
+        {
+            NN.UseMomentum = MomentumCheck.Checked;
+        }
+
+        private void TestCheck_CheckedChanged(object sender, EventArgs e)
+        {
+            Reader.Testing = TestCheck.Checked;
+        }
+
+        private void RMSDecayTxt_TextChanged(object sender, EventArgs e)
+        {
+            if (!double.TryParse(RMSDecayTxt.Text, out double rmsrate)) { MessageBox.Show("NAN"); return; }
+            if (rmsrate < 0 || rmsrate > 1) { MessageBox.Show("Invalid RMS decay rate"); return; }
+            NN.RMSDecay = rmsrate;
+        }
+
+        private void BetaTxt_TextChanged(object sender, EventArgs e)
+        {
+            if (!double.TryParse(BetaTxt.Text, out double momentum)) { MessageBox.Show("NAN"); return; }
+            if (momentum < 0 || momentum > 1) { MessageBox.Show("Invalid momentum"); return; }
+            NN.Momentum = momentum;
+        }
+
+        private void AlphaTxt_TextChanged(object sender, EventArgs e)
+        {
+            if (!double.TryParse(AlphaTxt.Text, out double lr)) { MessageBox.Show("NAN"); return; }
+            if (lr < 0 || lr > 1) { MessageBox.Show("Invalid learning rate"); return; }
+            NN.LearningRate = lr;
         }
     }
 }
