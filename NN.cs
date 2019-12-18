@@ -11,13 +11,13 @@ namespace CNN1
     {
         static int Resolution = 28;
         //Must be 1 for now
-        public int NumConvPools = 0;
+        public int NumConvPools = 1;
         public int NumLayers = 3;
         public int INCount = 28;
         public int NCount = 17;
         public int ONCount = 10;
-        int ConvSteps = 2;
-        public int PoolSize = 2;
+        int ConvSteps = 1;
+        public int PoolSize = 5;
         public int KernelSize = 3;
         public List<Convolution> Convolutions { get; set; }
         public List<Pooling> Poolings { get; set; }
@@ -45,9 +45,9 @@ namespace CNN1
         /// <param name="incount">Number of neurons in the input layer</param>
         /// <param name="hidcount">Number of neurons in the hidden layer</param>
         /// <param name="outcount">Number of neurons in the output layer</param>
-        public NN(double momentspeed, double learningrate, int numlayers, int incount, int hidcount, int outcount)
+        public NN(double momentspeed, double learningrate, int numlayers, int incount, int hidcount, int outcount, int convpoolcount)
         {
-            NumLayers = numlayers;
+            NumLayers = numlayers; NumConvPools = convpoolcount;
             INCount = incount; NCount = hidcount; ONCount = outcount; LearningRate = learningrate;
         }
         public NN() { }
@@ -66,7 +66,7 @@ namespace CNN1
                 if (NumConvPools == 0) { lowercount = Resolution * Resolution; }
                 for (int ii = 0; ii < NumConvPools; ii++)
                 {
-                    lowercount = (((lowercount / ConvSteps) - KernelSize) / PoolSize) + 1;
+                    lowercount = (((lowercount / ConvSteps) - KernelSize) / PoolSize);
                     if (ii == NumConvPools - 1) { lowercount *= lowercount; }
                 }
                 if (i != 0) { lowercount = Layers[i - 1].Length; count = NCount; }
@@ -86,7 +86,7 @@ namespace CNN1
             for (int i = 0; i < NumConvPools; i++)
             {
                 //Lowercount IS A TEMP VALUE FOR WHEN CONVOLVECOUNT = 1!
-                lowercount = (lowercount / ConvSteps);
+                lowercount = Resolution;
                 Convolutions[i].Kernel = new double[KernelSize, KernelSize];
                 for (int ii = 0; ii < KernelSize; ii++)
                 {
@@ -136,7 +136,7 @@ namespace CNN1
             //Need a convolution descent loop
             for (int i = 0; i < NumConvPools; i++)
             {
-                Convolutions[i].Descend(image, Momentum, LearningRate, ConvSteps);
+                Convolutions[i].Descend(image, Momentum, LearningRate, ConvSteps, UseMomentum);
             }
             for (int i = 0; i < Layers.Count; i++)
             {
@@ -161,7 +161,7 @@ namespace CNN1
             double tempavg = 0; int numneurons = 0;
             foreach (Convolution c in Convolutions)
             {
-                c.Descend(batchsize, LearningRate);
+                c.Descend(batchsize, LearningRate, UseRMSProp, RMSDecay);
             }
             foreach (Layer l in Layers)
             {
@@ -279,7 +279,6 @@ namespace CNN1
                 }
                 WeightGradient = new double[Length, InputLength];
                 BiasGradient = new double[Length];
-
             }
             else
             {
