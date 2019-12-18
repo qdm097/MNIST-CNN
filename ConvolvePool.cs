@@ -9,6 +9,7 @@ namespace CNN1
     class Convolution
     {
         public double[,] Kernel { get; set; }
+        public double[,] RMSGrad { get; set; }
         public int KernelSize { get; set; }
         double[,] Errors { get; set; }
         double[,] Gradients { get; set; }
@@ -19,39 +20,44 @@ namespace CNN1
             KernelSize = kernelsize;
             Kernel = new double[KernelSize, KernelSize];
             Momentums = new double[KernelSize, KernelSize];
+            RMSGrad = new double[KernelSize, KernelSize];
         }
-        public void Descend(int batchsize, double learningrate)
+        public void Descend(int batchsize, double learningrate, bool useRMS, double RMSdecay)
         {
-            for (int i = 0; i < KernelSize; i++)
+            double avg = 0;
+            if (!useRMS)
             {
-                for (int ii = 0; ii < KernelSize; ii++)
+                for (int i = 0; i < KernelSize; i++)
                 {
-                    Kernel[i, ii] -= learningrate * Gradients[i, ii] *(-2d / batchsize);
+                    for (int ii = 0; ii < KernelSize; ii++)
+                    {
+                        double gradient = learningrate * Gradients[i, ii] * (-2d / batchsize);
+                        Kernel[i, ii] -= gradient;
+                        avg -= gradient;
+                    }
                 }
             }
+            else
+            {
+                for (int i = 0; i < KernelSize; i++)
+                {
+                    for (int ii = 0; ii < KernelSize; ii++)
+                    {
+                        double gradient = Gradients[i, ii] * (-2d / batchsize);
+                        RMSGrad[i, ii] = (RMSGrad[i, ii] * RMSdecay) + ((1 - RMSdecay) * (gradient * gradient));
+                        double update = (learningrate / Math.Sqrt(RMSGrad[i, ii])) * gradient;
+                        Kernel[i, ii] -= update;
+                        avg -= update;
+                    }
+                }
+            }
+            Gradients = new double[KernelSize, KernelSize];
         }
-        public void Descend(double[,] input, double momentum, double learningrate, int step)
+        public void Descend(double[,] input, double momentum, double learningrate, int step, bool usemomentum)
         {
             Gradients = new double[KernelSize, KernelSize];
             int length = (input.GetLength(0) / step) - Kernel.GetLength(0);
             int width = (input.GetLength(1) / step) - Kernel.GetLength(1);
-            //for (int i = 0; i < KernelSize; i++)
-            //{
-            //    for (int ii = 0; ii < KernelSize; ii++)
-            //    {
-            //        for (int j = 0; j < length; j++)
-            //        {
-            //            for (int jj = 0; jj < width; jj++)
-            //            {
-            //                Gradients[i, ii] +=
-            //                    input[(i * step) + j, (ii * step) + jj] * Errors[i, ii]
-            //                    * ActivationFunctions.TanhDerriv(Zvals[i, ii]);
-            //            }
-            //        }
-            //        Momentums[i, ii] = (Momentums[i, ii] * momentum) - (learningrate * Gradients[i, ii]);
-            //        Gradients[i, ii] += Momentums[i, ii];
-            //    }
-            //}
             for (int i = 0; i < length; i++)
             {
                 for (int ii = 0; ii < width; ii++)
@@ -68,40 +74,28 @@ namespace CNN1
                     }
                 }
             }
-            for (int i = 0; i < KernelSize; i++)
+            if (usemomentum)
             {
-                for (int ii = 0; ii < KernelSize; ii++)
+                for (int i = 0; i < KernelSize; i++)
                 {
-                    Momentums[i, ii] = (Momentums[i, ii] * momentum) - (learningrate * Gradients[i, ii]);
-                    Gradients[i, ii] += Momentums[i, ii];
+                    for (int ii = 0; ii < KernelSize; ii++)
+                    {
+                        Momentums[i, ii] = (Momentums[i, ii] * momentum) - (learningrate * Gradients[i, ii]);
+                        Gradients[i, ii] += Momentums[i, ii];
+                    }
                 }
             }
         }
         public void Backprop(Pooling p)
         {
             Errors = p.Errors;
-            //Errors = new double[KernelSize, KernelSize];
-            //for (int i = 0; i < Zvals.GetLength(0); i++)
-            //{
-            //    for (int ii = 0; ii < Zvals.GetLength(1); ii++)
-            //    {
-            //        for (int j = 0; j < KernelSize; j++)
-            //        {
-            //            for (int jj = 0; jj < KernelSize; jj++)
-            //            {
-            //                //Check this
-            //                Errors[j, jj] += ActivationFunctions.TanhDerriv(Zvals[(i * step) + jj, (ii * step) + j]) * p.Errors[i, ii];
-            //            }
-            //        }
-            //    }
-            //}
         }
         //Crosscorrelate not convolve
         public double[,] Convolve(double[,] input, int step)
         {
-            Zvals = input;
             int length = (input.GetLength(0) / step) - Kernel.GetLength(0);
             int width = (input.GetLength(1) / step) - Kernel.GetLength(1);
+            Zvals = new double[length, width];
             double[,] output = new double[length, width];
             for (int i = 0; i < length; i++)
             {
@@ -115,6 +109,7 @@ namespace CNN1
                             output[i, ii] += input[(i * step) + j, (ii * step) + jj] * (Kernel[j, jj] + Momentums[j, jj]);
                         }
                     }
+                    Zvals[i, ii] = output[i, ii];
                     output[i, ii] = ActivationFunctions.Tanh(output[i, ii]);
                 }
             }
@@ -140,7 +135,7 @@ namespace CNN1
                 }
             }
             //Convert to 2d array
-            double[,] convertederrors = new double[(Mask.GetLength(0) / pool) + 1, (Mask.GetLength(1) / pool) + 1];
+            double[,] convertederrors = new double[(Mask.GetLength(0) / pool), (Mask.GetLength(1) / pool)];
             for (int i = 0; i < (int)Math.Sqrt(smallerrors.Length); i++)
             {
                 for (int ii = 0; ii < (int)Math.Sqrt(smallerrors.Length); ii++)
@@ -149,30 +144,49 @@ namespace CNN1
                 }
             }
             //Compute errors for pool
+            for (int i = 0; i < convertederrors.GetLength(0); i++)
+            {
+                for (int ii = 0; ii < convertederrors.GetLength(1); ii++)
+                {
+                    //Going to assign each converror to its respective mask value of 1, in order of 1s
+                }
+            }
             for (int i = 0; i < Mask.GetLength(0); i++)
             {
                 for (int ii = 0; ii < Mask.GetLength(1); ii++)
                 {
+                    if (Mask[i, ii] == 0) { continue; }
+                    Errors[i, ii] = convertederrors[];
                     Errors[i, ii] = Mask[i, ii] * convertederrors[i / pool, ii / pool];
                 }
             }
         }
         public double[,] Pool(double[,] input, int pool)
         {
-            length = (input.GetLength(0) / pool) + 1;
-            width = (input.GetLength(1) / pool) + 1;
-            double[,] output = new double[length, width];
+            if (input.GetLength(0) % pool != 0 || input.GetLength(1) % pool != 0)
+            { throw new Exception("Unclean divide in pooling"); }
+            double[,] output = new double[input.GetLength(0) / pool, input.GetLength(1) / pool];
             Mask = new double[input.GetLength(0), input.GetLength(1)];
-            for (int i = 0; i < input.GetLength(0); i++)
+            int currentx = 0, currenty = 0;
+            for (int i = 0; i < input.GetLength(0); i += pool)
             {
-                for (int ii = 0; ii < input.GetLength(1); ii++)
+                currenty = 0;
+                for (int ii = 0; ii < input.GetLength(1); ii += pool)
                 {
-                    if (output[i / pool, ii / pool] < input[i, ii] || output[i / pool, ii / pool] == 0)
+                    double max = double.MinValue; int maxX = i, maxY = ii;
+                    for (int j = 0; j < pool; j++)
                     {
-                        Mask[i, ii] = 1;
-                        output[i / pool, ii / pool] = input[i, ii];
+                        for (int jj = 0; jj < pool; jj++)
+                        {
+                            if (input[i + j, ii + jj] > max)
+                            { max = input[i + j, ii + jj]; maxX = i + j; maxY = ii + jj; continue; }
+                        }
                     }
+                    Mask[maxX, maxY] = 1;
+                    output[currentx, currenty] = input[maxX, maxY];
+                    currenty++;
                 }
+                currentx++;
             }
             return output;
         }
