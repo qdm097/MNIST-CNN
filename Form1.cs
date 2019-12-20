@@ -16,6 +16,7 @@ namespace CNN1
         public static int[,] image = new int[28, 28];
         int iterator = 0;
         int BatchSize = 1;
+        bool Testing = false;
         NN nn = new NN();
         void Learn()
         {
@@ -25,11 +26,20 @@ namespace CNN1
                 {
                     double[,] image = Reader.ReadNextImage();
                     int correct = Reader.ReadNextLabel();
-                    for (int i = 0; i < BatchSize; i++) {
-                        image = Reader.ReadNextImage(); correct = Reader.ReadNextLabel();
-                        nn.Run(image, correct);
+                    if (!Testing)
+                    {
+                        for (int i = 0; i < BatchSize; i++)
+                        {
+                            image = Reader.ReadNextImage(); correct = Reader.ReadNextLabel();
+                            nn.Run(image, correct, false);
+                        }
+                        nn.Run(BatchSize); iterator++;
                     }
-                    nn.Run(BatchSize); iterator++;
+                    else
+                    {
+                        if (iterator > 10000) { Run = false; MessageBox.Show("Full epoch completed"); }
+                        nn.Run(image, correct, true); iterator++;
+                    }
 
                     Invoke((Action)delegate {
                         AvgGradTxt.Text = Math.Round(nn.AvgGradient, 15).ToString();
@@ -90,7 +100,7 @@ namespace CNN1
                 || !int.TryParse(OutCountTxt.Text, out int outcount)
                 )
             { MessageBox.Show("Invalid parameters"); return; }
-            nn = new NN(momentum, learningrate, layercount, incount, hidcount, outcount);
+            nn = new NN(momentum, learningrate, layercount, incount, hidcount, outcount, convpoolcount);
             nn.Init();
             Data.Write(nn);
         }
@@ -197,6 +207,7 @@ namespace CNN1
         private void TestCheck_CheckedChanged(object sender, EventArgs e)
         {
             Reader.Testing = TestCheck.Checked;
+            Testing = true;
         }
 
         private void RMSDecayTxt_TextChanged(object sender, EventArgs e)
