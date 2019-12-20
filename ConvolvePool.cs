@@ -68,8 +68,8 @@ namespace CNN1
                         {
                             //Check this
                             Gradients[j, jj] += input[(i * step) + j, (ii * step) + jj] 
-                                * Errors[j, jj]
-                                * ActivationFunctions.TanhDerriv(Zvals[j, jj]);
+                                * Errors[i, ii]
+                                * ActivationFunctions.TanhDerriv(Zvals[i, ii]);
                         }
                     }
                 }
@@ -144,20 +144,14 @@ namespace CNN1
                 }
             }
             //Compute errors for pool
-            for (int i = 0; i < convertederrors.GetLength(0); i++)
-            {
-                for (int ii = 0; ii < convertederrors.GetLength(1); ii++)
-                {
-                    //Going to assign each converror to its respective mask value of 1, in order of 1s
-                }
-            }
+            int iterator = 0;
             for (int i = 0; i < Mask.GetLength(0); i++)
             {
                 for (int ii = 0; ii < Mask.GetLength(1); ii++)
                 {
                     if (Mask[i, ii] == 0) { continue; }
-                    Errors[i, ii] = convertederrors[];
-                    Errors[i, ii] = Mask[i, ii] * convertederrors[i / pool, ii / pool];
+                    Errors[i, ii] = convertederrors[iterator / convertederrors.GetLength(0), iterator % convertederrors.GetLength(1)];
+                    iterator++;
                 }
             }
         }
