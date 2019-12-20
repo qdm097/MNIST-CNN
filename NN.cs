@@ -17,8 +17,8 @@ namespace CNN1
         public int NCount = 17;
         public int ONCount = 10;
         int ConvSteps = 1;
-        public int PoolSize = 5;
-        public int KernelSize = 3;
+        public int PoolSize = 2;
+        public int KernelSize = 2;
         public List<Convolution> Convolutions { get; set; }
         public List<Pooling> Poolings { get; set; }
         public List<Layer> Layers { get; set; }
@@ -97,7 +97,7 @@ namespace CNN1
                 }
             }
         }
-        public void Run(double[,] image, int correct)
+        public void Run(double[,] image, int correct, bool testing)
         {
             double[,] input = new double[28, 28];
             //Deepclone?
@@ -114,36 +114,38 @@ namespace CNN1
                 if (i == 0) { Layers[i].Calculate(input); continue; }
                 Layers[i].Calculate(Layers[i - 1].Values, i == Layers.Count - 1);
             }
-            //Backward
-            for (int i = Layers.Count - 1; i >= 0; i--)
+            if (!testing)
             {
-                if (i == Layers.Count - 1) { Layers[i].Backprop(correct); continue; }
-                Layers[i].Backprop(Layers[i + 1]);
-            }
-            for (int i = NumConvPools - 1; i >= 0; i--)
-            {
-                if (i == 0)
+                //Backward
+                for (int i = Layers.Count - 1; i >= 0; i--)
                 {
-                    Poolings[i].Backprop(Layers[0], PoolSize);
-                    Convolutions[i].Backprop(Poolings[i]);
+                    if (i == Layers.Count - 1) { Layers[i].Backprop(correct); continue; }
+                    Layers[i].Backprop(Layers[i + 1]);
                 }
-                else
+                for (int i = NumConvPools - 1; i >= 0; i--)
                 {
-                    //Undefined for now
+                    if (i == 0)
+                    {
+                        Poolings[i].Backprop(Layers[0], PoolSize);
+                        Convolutions[i].Backprop(Poolings[i]);
+                    }
+                    else
+                    {
+                        //Undefined for now
+                    }
+                }
+                //Descend
+                //Need a convolution descent loop
+                for (int i = 0; i < NumConvPools; i++)
+                {
+                    Convolutions[i].Descend(image, Momentum, LearningRate, ConvSteps, UseMomentum);
+                }
+                for (int i = 0; i < Layers.Count; i++)
+                {
+                    if (i == 0) { Layers[i].Descend(input, Momentum, LearningRate, UseMomentum); continue; }
+                    Layers[i].Descend(Layers[i - 1].Values, Momentum, LearningRate, i == Layers.Count - 1, UseMomentum);
                 }
             }
-            //Descend
-            //Need a convolution descent loop
-            for (int i = 0; i < NumConvPools; i++)
-            {
-                Convolutions[i].Descend(image, Momentum, LearningRate, ConvSteps, UseMomentum);
-            }
-            for (int i = 0; i < Layers.Count; i++)
-            {
-                if (i == 0) { Layers[i].Descend(input, Momentum, LearningRate, UseMomentum); continue; }
-                Layers[i].Descend(Layers[i - 1].Values, Momentum, LearningRate, i == Layers.Count - 1, UseMomentum);
-            }
-
             //Report values
             Guess = -1; double certainty = -5; double error = 0;
             for (int i = 0; i < ONCount; i++)
