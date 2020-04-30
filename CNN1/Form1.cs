@@ -13,8 +13,9 @@ namespace CNN1
     public partial class Form1 : Form
     {
         bool Run = false;
-        public static int[,] image = new int[28, 28];
-        int iterator = 0;
+        public static double[,] image = new double[28, 28];
+        int imageiterator = 0;
+        int testiterator = 0;
         int BatchSize = 1;
         bool Testing = false;
         NN nn = new NN();
@@ -24,7 +25,7 @@ namespace CNN1
             {
                 while (Run)
                 {
-                    double[,] image = Reader.ReadNextImage();
+                    image = Reader.ReadNextImage();
                     int correct = Reader.ReadNextLabel();
                     if (!Testing)
                     {
@@ -33,25 +34,25 @@ namespace CNN1
                             image = Reader.ReadNextImage(); correct = Reader.ReadNextLabel();
                             nn.Run(image, correct, false);
                         }
-                        nn.Run(BatchSize); iterator++;
+                        nn.Run(BatchSize);
                     }
                     else
                     {
-                        if (iterator > 10000) { Run = false; MessageBox.Show("Full epoch completed"); }
-                        nn.Run(image, correct, true); iterator++;
+                        if (testiterator > 10000) { Run = false; MessageBox.Show("Full epoch completed"); }
+                        nn.Run(image, correct, true); testiterator++;
                     }
 
                     Invoke((Action)delegate {
                         AvgGradTxt.Text = Math.Round(nn.AvgGradient, 15).ToString();
                         AvgCorrectTxt.Text = Math.Round(nn.PercCorrect, 15).ToString();
                         ErrorTxt.Text = Math.Round(nn.Error, 15).ToString();
-                        if (iterator > 30)
+                        if (imageiterator > 100)
                         {
-                            iterator = 0;
+                            imageiterator = 0;
                             pictureBox1.Image = FromTwoDimIntArrayGray(Scaler());
                             GuessTxt.Text = nn.Guess.ToString();
                         }
-
+                        imageiterator++;
                     });
                 }
                 Data.Write(nn);
@@ -76,7 +77,7 @@ namespace CNN1
                 RMSCheck.Checked = NN.UseRMSProp;
                 MomentumCheck.Checked = NN.UseMomentum;
             }
-            catch { MessageBox.Show("Failed to load data; reset to default"); Data.Running = false; nn.Init(); }
+            catch { MessageBox.Show("Failed to load data; reset to default"); Data.Running = false; nn.Init(); Data.Write(nn); }
         }
 
         private void Button1_Click(object sender, EventArgs e)
@@ -128,7 +129,7 @@ namespace CNN1
                     {
                         for (int ii = 0; ii < scale; ii++)
                         {
-                            scaled[(j * scale) + i, (jj * scale) + ii] = image[j, jj];
+                            scaled[(j * scale) + i, (jj * scale) + ii] = image[jj, j] > 0 ? 255 : 0;
                         }
                     }
                 }
@@ -156,14 +157,21 @@ namespace CNN1
             // generate palette
             Color[] palette = new Color[256];
             for (Int32 b = 0; b < 256; b++)
-            {
-                if (b == 0 || b == 255) { palette[b] = Color.FromArgb(b, b, b); }
-                else { palette[b] = Color.FromArgb(255, 255, 255); }
-            }
+                palette[b] = Color.FromArgb(b, b, b);
             // Build image
             return BuildImage(dataBytes, width, height, width, PixelFormat.Format8bppIndexed, palette, null);
         }
-
+        /// <summary>
+        /// Creates a bitmap based on data, width, height, stride and pixel format.
+        /// </summary>
+        /// <param name="sourceData">Byte array of raw source data</param>
+        /// <param name="width">Width of the image</param>
+        /// <param name="height">Height of the image</param>
+        /// <param name="stride">Scanline length inside the data</param>
+        /// <param name="pixelFormat">Pixel format</param>
+        /// <param name="palette">Color palette</param>
+        /// <param name="defaultColor">Default color to fill in on the palette if the given colors don't fully fill it.</param>
+        /// <returns>The new image</returns>
         public static Bitmap BuildImage(Byte[] sourceData, Int32 width, Int32 height, Int32 stride, PixelFormat pixelFormat, Color[] palette, Color? defaultColor)
         {
             Bitmap newImage = new Bitmap(width, height, pixelFormat);
@@ -198,7 +206,6 @@ namespace CNN1
             }
             return newImage;
         }
-
         private void RMSCheck_CheckedChanged(object sender, EventArgs e)
         {
             NN.UseRMSProp = RMSCheck.Checked;

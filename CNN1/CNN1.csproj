@@ -79,9 +79,16 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <None Include="test-images.idx3-ubyte" />
+    <None Include="test-labels.idx1-ubyte" />
+    <None Include="train-images.idx3-ubyte" />
+    <None Include="train-labels.idx1-ubyte" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="WBs.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

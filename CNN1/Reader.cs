@@ -12,10 +12,10 @@ namespace CNN1
         public static bool LabelReaderRunning = false;
         public static bool ImageReaderRunning = false;
 
-        static readonly string TrainImagePath = @"C:\Users\gwflu\Desktop\Test\train-images-idx3-ubyte\train-images.idx3-ubyte";
-        static readonly string TrainLabelPath = @"C:\Users\gwflu\Desktop\Test\train-labels-idx1-ubyte\train-labels.idx1-ubyte";
-        static readonly string TestLabelPath = @"C:\Users\gwflu\Desktop\Test\t10k-labels-idx1-ubyte\t10k-labels.idx1-ubyte";
-        static readonly string TestImagePath = @"C:\Users\gwflu\Desktop\Test\t10k-images-idx3-ubyte\t10k-images.idx3-ubyte";
+        static readonly string TrainImagePath = Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "\\train-images.idx3-ubyte";
+        static readonly string TrainLabelPath = Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "\\train-labels.idx1-ubyte";
+        static readonly string TestLabelPath =  Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "\\test-labels.idx1-ubyte";
+        static readonly string TestImagePath =  Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "\\test-images.idx3-ubyte";
 
         private static string LabelPath = Testing ? TestLabelPath : TrainLabelPath;
         private static string ImagePath = Testing ? TestImagePath : TrainImagePath;
@@ -79,20 +79,6 @@ namespace CNN1
 
             fs.Close();
             return result;
-        }
-        public static double[] ReadSP()
-        {
-            string[] full = null;
-            using (var reader = new StreamReader(@"C:\Users\gwflu\Desktop\Test\SP500CSV.csv"))
-            {
-                string all = reader.ReadToEnd();
-                full = all.Split(',');
-            }
-            double[] values = new double[(full.Length - 10) / 9];
-            int iterator = 0;
-            for (int i = 10; i < full.Length; i += 9)
-            { values[iterator] = double.Parse(full[i]); iterator++; }
-            return values;
         }
     }
 }

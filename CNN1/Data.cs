@@ -9,7 +9,7 @@ namespace CNN1
 {
     static class Data
     {
-        static readonly string Path = @"C:\Users\gwflu\Desktop\Test\DataBackup.txt";
+        static readonly string Path = Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "\\WBs.txt";
         public static bool Running = false;
         public static void Read(NN nn)
         {
