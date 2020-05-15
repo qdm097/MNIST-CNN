@@ -245,7 +245,7 @@ namespace CNN1
 
         private void Batchtxt_TextChanged(object sender, EventArgs e)
         {
-            if (!double.TryParse(Batchtxt.Text, out double bs)) { MessageBox.Show("NAN"); return; }
+            if (!int.TryParse(Batchtxt.Text, out int bs)) { MessageBox.Show("NAN"); return; }
             if (bs < 0 || bs > 1000) { MessageBox.Show("Batch size must be between 0 and 1000"); return; }
             BatchSize = bs;
         }
