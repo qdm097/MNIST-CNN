@@ -129,7 +129,7 @@ namespace CNN1
                     {
                         for (int ii = 0; ii < scale; ii++)
                         {
-                            scaled[(j * scale) + i, (jj * scale) + ii] = image[jj, j] > 0 ? 255 : 0;
+                            scaled[(j * scale) + i, (jj * scale) + ii] = image[jj, j];
                         }
                     }
                 }
