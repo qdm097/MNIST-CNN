@@ -19,7 +19,7 @@ namespace CNN1
         int BatchSize = 1;
         bool Testing = false;
         NN nn = new NN();
-       void Learn()
+        void Learn()
         {
             new Thread(() =>
             {
@@ -32,14 +32,14 @@ namespace CNN1
                         for (int i = 0; i < BatchSize; i++)
                         {
                             image = Reader.ReadNextImage(); correct = Reader.ReadNextLabel();
-                            nn.Run(ActivationFunctions.Normalize(image, 28, 28), correct, false);
+                            nn.Run(image, correct, false);
                         }
                         nn.Run(BatchSize);
                     }
                     else
                     {
                         if (testiterator > 10000) { Run = false; MessageBox.Show("Full epoch completed"); }
-                        nn.Run(ActivationFunctions.Normalize(image, 28, 28), correct, true); testiterator++;
+                        nn.Run(image, correct, true); testiterator++;
                     }
 
                     Invoke((Action)delegate {
@@ -49,7 +49,7 @@ namespace CNN1
                         if (imageiterator > 100)
                         {
                             imageiterator = 0;
-                            pictureBox1.Image = FromTwoDimIntArrayGray(Resize(Rescale(image)));
+                            pictureBox1.Image = FromTwoDimIntArrayGray(ResizeImg(Rescale(image)));
                             GuessTxt.Text = nn.Guess.ToString();
                         }
                         imageiterator++;
