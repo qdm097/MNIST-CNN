@@ -19,7 +19,7 @@ namespace CNN1
         int BatchSize = 1;
         bool Testing = false;
         NN nn = new NN();
-        void Learn()
+       void Learn()
         {
             new Thread(() =>
             {
@@ -32,14 +32,14 @@ namespace CNN1
                         for (int i = 0; i < BatchSize; i++)
                         {
                             image = Reader.ReadNextImage(); correct = Reader.ReadNextLabel();
-                            nn.Run(image, correct, false);
+                            nn.Run(ActivationFunctions.Normalize(image, 28, 28), correct, false);
                         }
                         nn.Run(BatchSize);
                     }
                     else
                     {
                         if (testiterator > 10000) { Run = false; MessageBox.Show("Full epoch completed"); }
-                        nn.Run(image, correct, true); testiterator++;
+                        nn.Run(ActivationFunctions.Normalize(image, 28, 28), correct, true); testiterator++;
                     }
 
                     Invoke((Action)delegate {
@@ -49,7 +49,7 @@ namespace CNN1
                         if (imageiterator > 100)
                         {
                             imageiterator = 0;
-                            pictureBox1.Image = FromTwoDimIntArrayGray(Scaler());
+                            pictureBox1.Image = FromTwoDimIntArrayGray(Resize(Rescale(image)));
                             GuessTxt.Text = nn.Guess.ToString();
                         }
                         imageiterator++;
@@ -58,7 +58,7 @@ namespace CNN1
                 Data.Write(nn);
             }).Start();
         }
-
+        
         public Form1()
         {
             InitializeComponent();
@@ -115,7 +115,8 @@ namespace CNN1
         {
             nn.TrialNum = 0;
         }
-        public int[,] Scaler()
+        
+        int[,] ResizeImg(double[,] input)
         {
             int scale = 10;
             int[,] scaled = new int[28 * scale, 28 * scale];
@@ -129,13 +130,34 @@ namespace CNN1
                     {
                         for (int ii = 0; ii < scale; ii++)
                         {
-                            scaled[(j * scale) + i, (jj * scale) + ii] = (int)image[jj, j];
+                            scaled[(j * scale) + i, (jj * scale) + ii] = (int)input[jj, j];
                         }
                     }
                 }
             }
             return scaled;
         }
+        
+        public static double[,] Rescale(double[,] array)
+        {
+            double setmin = 0, setmax = 0;
+            //Find the minimum and maximum values of the dataset
+            foreach (double d in array)
+            {
+                if (d > setmax) { setmax = d; }
+                if (d < setmin) { setmin = d; }
+            }
+            //Rescale the dataset
+            for (int i = 0; i < array.GetLength(0); i++)
+            {
+                for (int ii = 0; ii < array.GetLength(1); ii++)
+                {
+                    array[i, ii] = 255 * ((array[i, ii] - setmin) / (setmax - setmin));
+                }
+            }
+            return array;
+        }
+        
         public static Bitmap FromTwoDimIntArrayGray(Int32[,] data)
         {
             // Transform 2-dimensional Int32 array to 1-byte-per-pixel byte array
@@ -161,6 +183,7 @@ namespace CNN1
             // Build image
             return BuildImage(dataBytes, width, height, width, PixelFormat.Format8bppIndexed, palette, null);
         }
+        
         /// <summary>
         /// Creates a bitmap based on data, width, height, stride and pixel format.
         /// </summary>
@@ -206,6 +229,7 @@ namespace CNN1
             }
             return newImage;
         }
+        
         private void RMSCheck_CheckedChanged(object sender, EventArgs e)
         {
             NN.UseRMSProp = RMSCheck.Checked;
