@@ -23,9 +23,7 @@ namespace CNN1
         /// </summary>
         /// <param name="input">Previous layer's values</param>
         /// <param name="output">Whether the layer is the output layer</param>
-        void Backprop(double[] input, bool output);
-        void CalcError(iLayer output);
-        void CalcError(double correct);
+        void Backprop(double[] input, iLayer outputlayer, bool isoutput, int correct);
         void Calculate(double[] input, bool output);
         void Calculate(double[,] input, bool output);
     }

@@ -17,9 +17,7 @@ namespace CNN1
         public int InputLength { get; set; }
         double[,] RMSGrad { get; set; }
         public double[] Errors { get; set; }
-        public double[] IntermediaryErrors { get; set; }
         public double[] ZVals { get; set; }
-        double[,] Input { get; set; }
         public double[] Values { get; set; }
         public double AvgUpdate { get; set; }
         public static int StepSize = 1;
@@ -73,66 +71,44 @@ namespace CNN1
             }
             Gradients = new double[KernelSize, KernelSize];
         }
-        public void Backprop(double[] input, bool useless)
+        public void Backprop(double[] input, iLayer outputlayer, bool uselessbool, int uselessint)
         {
-            Gradients = new double[KernelSize, KernelSize];
-            for (int k = 0; k < KernelSize; k++)
-            {
-                for (int j = 0; j < KernelSize; j++)
-                {
-                    Gradients[k, j] += input[j] * Maths.TanhDerriv(ZVals[k]) * Errors[k];
-                    if (NN.UseMomentum)
-                    {
-                        Momentums[k, j] = (Momentums[k, j] * NN.Momentum) - (NN.LearningRate * Gradients[k, j]);
-                        Gradients[k, j] += Momentums[k, j];
-                    }
-                }
-            }
-        }
-        /// <summary>
-        /// Calculates the errors of the convolution
-        /// </summary>
-        /// <param name="outputlayer">The layer which comes after the convolutional layer</param>
-        public void CalcError(iLayer outputlayer)
-        {
+            //Calc errors
+            double[,] Input = Maths.Convert(input);
             if (outputlayer is FullyConnectedLayer)
             {
                 //Errors with respect to the output of the convolution
                 //dl/do
-                IntermediaryErrors = new double[outputlayer.InputLength];
+                Errors = new double[outputlayer.InputLength];
                 for (int k = 0; k < outputlayer.Length; k++)
                 {
                     for (int j = 0; j < outputlayer.InputLength; j++)
                     {
-                        IntermediaryErrors[j] += outputlayer.Weights[k, j] * Maths.TanhDerriv(outputlayer.ZVals[k]) * outputlayer.Errors[k];
+                        Errors[j] += outputlayer.Weights[k, j] * Maths.TanhDerriv(outputlayer.ZVals[k]) * outputlayer.Errors[k];
                     }
                 }
-                //Errors with respect to the filter
-                Errors = Maths.Convert(Convolve(Maths.Convert(IntermediaryErrors), Input));
             }
             if (outputlayer is ConvolutionLayer)
             {
                 var CLOutput = outputlayer as ConvolutionLayer;
                 //Flipped?
-                IntermediaryErrors = Maths.Convert(CLOutput.FullConvolve(CLOutput.Weights, Maths.Convert(CLOutput.IntermediaryErrors)));
-                Errors = Maths.Convert(Convolve(Maths.Convert(IntermediaryErrors), Input));
+                Errors = Maths.Convert(CLOutput.FullConvolve(CLOutput.Weights, Maths.Convert(CLOutput.Errors)));
             }
             if (outputlayer is PoolingLayer)
             {
                 var PLOutput = outputlayer as PoolingLayer;
                 int iterator = 0;
-                IntermediaryErrors = new double[ZVals.Length];
+                Errors = new double[ZVals.Length];
                 for (int i = 0; i < ZVals.Length; i++)
                 {
                     if (PLOutput.Mask[i] == 0) { continue; }
-                    IntermediaryErrors[i] = PLOutput.Errors[iterator];
+                    Errors[i] = PLOutput.Errors[iterator];
                     iterator++;
                 }
-                //Errors with respect to the filter
-                Errors = Maths.Convert(Convolve(Maths.Convert(IntermediaryErrors), Input));
             }
+            //Calc gradients (errors with respect to the filter)
+            Gradients = Convolve(Maths.Convert(Errors), Input);
         }
-        public void CalcError(double useless) { throw new Exception("The convolution layer is never an output layer"); }
         /// <summary>
         /// Calculates the dot product of the kernel and input matrix.
         /// Matrices should be size [x, y] and [y], respectively, where x is the output size and y is the latent space's size
@@ -151,7 +127,6 @@ namespace CNN1
         /// <param name="isoutput"></param>
         public void Calculate(double[,] input, bool isoutput)
         {
-            Input = input;
             var output = Convolve(Weights, input);
             ZVals = Maths.Convert(output);
             if (!isoutput) { output = Maths.Tanh(output); }

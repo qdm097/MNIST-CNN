@@ -112,12 +112,54 @@ namespace CNN1
             BiasGradient = new double[Length];
         }
         /// <summary>
-        /// Descent for other layers
+        /// Backpropegation of error and calcluation of gradients
         /// </summary>
         /// <param name="input">Previous layer's values</param>
         /// <param name="isoutput">Whether the layer is the output layer</param>
-        public void Backprop(double[] input, bool isoutput)
+        public void Backprop(double[] input, iLayer outputlayer, bool isoutput, int correct)
         {
+            //Calculate error
+            if (isoutput)
+            {
+                Errors = new double[Length];
+                for (int i = 0; i < Length; i++)
+                {
+                    Errors[i] = 2d * ((i == correct ? 1d : 0d) - Values[i]);
+                }
+            }
+            else
+            {
+                if (outputlayer is FullyConnectedLayer)
+                {
+                    var FCLOutput = outputlayer as FullyConnectedLayer;
+                    Errors = new double[Length];
+                    for (int k = 0; k < FCLOutput.Length; k++)
+                    {
+                        for (int j = 0; j < Length; j++)
+                        {
+                            Errors[j] += FCLOutput.Weights[k, j] * Maths.TanhDerriv(outputlayer.ZVals[k]) * FCLOutput.Errors[k];
+                        }
+                    }
+                }
+                if (outputlayer is ConvolutionLayer)
+                {
+                    var CLOutput = outputlayer as ConvolutionLayer;
+                    Errors = Maths.Convert(CLOutput.FullConvolve(CLOutput.Weights, Maths.Convert(CLOutput.Errors)));
+                }
+                if (outputlayer is PoolingLayer)
+                {
+                    var PLOutput = outputlayer as PoolingLayer;
+                    int iterator = 0;
+                    Errors = new double[Length];
+                    for (int i = 0; i < Length; i++)
+                    {
+                        if (PLOutput.Mask[i] == 0) { continue; }
+                        Errors[i] = PLOutput.Errors[iterator];
+                        iterator++;
+                    }
+                }
+            }
+            //Calculate gradients
             for (int i = 0; i < Length; i++)
             {
                 for (int ii = 0; ii < InputLength; ii++)
@@ -138,58 +180,6 @@ namespace CNN1
                     BMomentum[i] = (BMomentum[i] * NN.Momentum) - (NN.LearningRate * BiasGradient[i]);
                     BiasGradient[i] += BMomentum[i];
                 }
-            }
-        }
-        /// <summary>
-        /// I used the following intuition to work out this method of backpropegation, 
-        /// because I could not find an explanation anywhere online:
-        /// "Error is how much you're wrong, adjusted for how much your superior cares and how much he's wrong"
-        /// I then realized that this applies to convolution as much as it does normally.
-        /// So that means the error, with respect to any given input value, is defined the same as normally.
-        /// In other words, <i>you can use the same formula as normal, but calculate it with convolution</i>
-        /// This is done like so: "Error += output.weight * output.error * tanhderriv(output.zval)"
-        /// With respect to the given indices: i, ii, j, jj.
-        /// All adjusted for convolution, demonstraighted below.
-        /// </summary>
-        /// <param name="outputlayer"></param>
-        public void CalcError(iLayer outputlayer)
-        {
-            if (outputlayer is FullyConnectedLayer)
-            {
-                var FCLOutput = outputlayer as FullyConnectedLayer;
-                Errors = new double[Length];
-                for (int k = 0; k < FCLOutput.Length; k++)
-                {
-                    for (int j = 0; j < Length; j++)
-                    {
-                        Errors[j] += FCLOutput.Weights[k, j] * Maths.TanhDerriv(outputlayer.ZVals[k]) * FCLOutput.Errors[k];
-                    }
-                }
-            }
-            if (outputlayer is ConvolutionLayer)
-            {
-                var CLOutput = outputlayer as ConvolutionLayer;
-                Errors = Maths.Convert(CLOutput.FullConvolve(CLOutput.Weights, Maths.Convert(CLOutput.IntermediaryErrors)));
-            }
-            if (outputlayer is PoolingLayer)
-            {
-                var PLOutput = outputlayer as PoolingLayer;
-                int iterator = 0;
-                Errors = new double[Length];
-                for (int i = 0; i < Length; i++)
-                {
-                    if (PLOutput.Mask[i] == 0) { continue; }
-                    Errors[i] = PLOutput.Errors[iterator];
-                    iterator++;
-                }
-            }
-        }
-        public void CalcError(double correct)
-        {
-            Errors = new double[Length];
-            for (int i = 0; i < Length; i++)
-            {
-                Errors[i] = 2d * ((i == correct ? 1d : 0d) - Values[i]);
             }
         }
         public void Calculate(double[] input, bool output)

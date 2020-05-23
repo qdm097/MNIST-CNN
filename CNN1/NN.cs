@@ -69,17 +69,13 @@ namespace CNN1
             }
             if (!testing)
             {
-                //Errors
-                Layers[NumLayers - 1].CalcError(correct);
-                for (int i = NumLayers - 2; i >= 0; i--)
-                {
-                    Layers[i].CalcError(Layers[i + 1]); 
-                }
                 //Backprop
-                Layers[0].Backprop(input, NumLayers == 1);
-                for (int i = 1; i < NumLayers; i++)
+                for (int i = NumLayers - 1; i >= 0; i--)
                 {
-                    Layers[i].Backprop(Layers[i - 1].Values, i == Layers.Count - 1); continue; 
+                    bool isoutput = i == Layers.Count - 1;
+                    iLayer outputlayer = isoutput ? null : Layers[i + 1];
+                    double[] inputvals = i == 0 ? input : Layers[i - 1].Values;
+                    Layers[i].Backprop(inputvals, outputlayer, isoutput, correct); 
                 }
             }
             //Report values
