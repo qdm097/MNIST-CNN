@@ -11,7 +11,7 @@ namespace CNN1
         //Kernel
         public double[,] Weights { get; set; }
         double[,] Gradients { get; set; }
-        double[,] Momentums { get; set; }
+        double[,] WMomentum { get; set; }
         public int Length { get; set; }
         public int KernelSize { get; set; }
         public int InputLength { get; set; }
@@ -28,7 +28,7 @@ namespace CNN1
             KernelSize = kernelsize;
             Weights = new double[KernelSize, KernelSize];
             Gradients = new double[KernelSize, KernelSize];
-            Momentums = new double[KernelSize, KernelSize];
+            WMomentum = new double[KernelSize, KernelSize];
             RMSGrad = new double[KernelSize, KernelSize];
             AvgUpdate = 0;
         }
@@ -108,6 +108,28 @@ namespace CNN1
             }
             //Calc gradients (errors with respect to the filter)
             Gradients = Convolve(Maths.Convert(Errors), Input);
+            if (NN.UseMomentum)
+            {
+                for (int i = 0; i < KernelSize; i++)
+                {
+                    for (int ii = 0; ii < KernelSize; ii++)
+                    {
+                        if (NN.UseNesterov)
+                        {
+                            //Nesterov momentum formula
+                            Gradients[i, ii] = ((1 + NN.Momentum) * (NN.LearningRate * Gradients[i, ii]))
+                                + (NN.Momentum * NN.Momentum * WMomentum[i, ii]);
+                        }
+                        else
+                        {
+                            //Standard momentum formula
+                            Gradients[i, ii] = (WMomentum[i, ii] * NN.Momentum) + (NN.LearningRate * Gradients[i, ii]);
+                        }
+                        //Momentum is the previous iteration's gradient
+                        WMomentum[i, ii] = Gradients[i, ii];
+                    }
+                }
+            }
         }
         /// <summary>
         /// Calculates the dot product of the kernel and input matrix.
@@ -127,6 +149,17 @@ namespace CNN1
         /// <param name="isoutput"></param>
         public void Calculate(double[,] input, bool isoutput)
         {
+            if (NN.UseNesterov && NN.UseMomentum)
+            {
+                for (int i = 0; i < KernelSize; i++)
+                {
+                    for (int ii = 0; ii < KernelSize; ii++)
+                    {
+                        Weights[i, ii] = Weights[i, ii] + (NN.Momentum * WMomentum[i, ii]);
+                    }
+                }
+            }
+
             var output = Convolve(Weights, input);
             ZVals = Maths.Convert(output);
             if (!isoutput) { output = Maths.Tanh(output); }

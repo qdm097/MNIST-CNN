@@ -168,8 +168,19 @@ namespace CNN1
                     WeightGradient[i, ii] = input[ii] * Maths.TanhDerriv(ZVals[i]) * Errors[i];
                     if (NN.UseMomentum)
                     {
-                        WMomentum[i, ii] = (WMomentum[i, ii] * NN.Momentum) - (NN.LearningRate * WeightGradient[i, ii]);
-                        WeightGradient[i, ii] += WMomentum[i, ii];
+                        if (NN.UseNesterov)
+                        {
+                            //Nesterov momentum formula
+                            WeightGradient[i, ii] = ((1 + NN.Momentum) * (NN.LearningRate * WeightGradient[i, ii])) 
+                                + (NN.Momentum * NN.Momentum * WMomentum[i, ii]);
+                        }
+                        else
+                        {
+                            //Standard momentum formula
+                            WeightGradient[i, ii] = (WMomentum[i, ii] * NN.Momentum) + (NN.LearningRate * WeightGradient[i, ii]);
+                        }
+                        //Momentum is the previous iteration's gradient
+                        WMomentum[i, ii] = WeightGradient[i, ii];
                     }
                 }
                 if (isoutput) { continue; }
@@ -177,34 +188,43 @@ namespace CNN1
                 BiasGradient[i] = Maths.TanhDerriv(ZVals[i]) * Errors[i];
                 if (NN.UseMomentum)
                 {
-                    BMomentum[i] = (BMomentum[i] * NN.Momentum) - (NN.LearningRate * BiasGradient[i]);
-                    BiasGradient[i] += BMomentum[i];
+                    if (NN.UseNesterov)
+                    {
+                        BiasGradient[i] = ((1 + NN.Momentum) * (NN.LearningRate * BiasGradient[i]))
+                            + (NN.Momentum * NN.Momentum * BMomentum[i]);
+                    }
+                    else
+                    {
+                        BiasGradient[i] = (BMomentum[i] * NN.Momentum) + (NN.LearningRate * BiasGradient[i]);
+                    }
+                    //Momentum is the previous iteration's gradient
+                    BMomentum[i] = BiasGradient[i];
                 }
             }
         }
         public void Calculate(double[] input, bool output)
         {
             var vals = new double[Length];
+            if (NN.UseNesterov && NN.UseMomentum)
+            {
+                for (int i = 0; i < Length; i++)
+                {
+                    for (int ii = 0; ii < InputLength; ii++)
+                    {
+                        Weights[i, ii] = Weights[i, ii] + (NN.Momentum * WMomentum[i, ii]);
+                    }
+                    Biases[i] = Biases[i] + (NN.Momentum * BMomentum[i]);
+                }
+            }
             for (int k = 0; k < Length; k++)
             {
                 for (int j = 0; j < InputLength; j++)
                 {
-                    if (NN.UseMomentum && NN.UseNesterov)
-                    {
-                        vals[k] += (Weights[k, j] + WMomentum[k, j]) * input[j];
-                    }
-                    else
-                    {
-                        vals[k] += Weights[k, j] * input[j];
-                    }
+                    vals[k] += Weights[k, j] * input[j];
                 }
                 if (!output)
                 {
                     vals[k] += Biases[k];
-                    if (NN.UseMomentum && NN.UseNesterov)
-                    {
-                        vals[k] += BMomentum[k];
-                    }
                 }
             }
             ZVals = vals;

@@ -40,7 +40,7 @@ namespace CNN1
         }
         public static double Tanh(double number)
         {
-            return (Math.Pow(Math.E, 2 * number) - 1) / (Math.Pow(Math.E, 2 * number) + 1);
+            return (Math.Pow(Math.E, 2 * number) - 1) / (Math.Pow(Math.E, 2 * number) + 1); 
         }
         public static double TanhDerriv(double number)
         {
