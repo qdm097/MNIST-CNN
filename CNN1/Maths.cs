@@ -153,5 +153,14 @@ namespace CNN1
             stddev = Math.Sqrt(stddev);
             return stddev;
         }
+        public static double[] Scale(double scale, double[] array)
+        {
+            double[] output = new double[array.Length];
+            for (int i = 0; i < array.Length; i++)
+            {
+                output[i] = array[i] * scale;
+            }
+            return output;
+        }
     }
 }

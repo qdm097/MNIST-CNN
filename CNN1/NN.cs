@@ -11,8 +11,6 @@ namespace CNN1
     {
         public static int Resolution = 28;
         public int NumLayers { get; set; }
-        public int PoolSize = 2;
-        public int KernelSize = 2;
         public List<iLayer> Layers { get; set; }
         public static double Momentum = .9;
         public static double LearningRate = .000146;

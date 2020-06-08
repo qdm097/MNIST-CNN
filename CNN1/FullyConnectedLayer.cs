@@ -124,7 +124,7 @@ namespace CNN1
                 Errors = new double[Length];
                 for (int i = 0; i < Length; i++)
                 {
-                    Errors[i] = 2d * ((i == correct ? 1d : 0d) - Values[i]);
+                    Errors[i] = 2d * (Values[i] - (i == correct ? 1d : 0d));
                 }
             }
             else
@@ -165,7 +165,7 @@ namespace CNN1
                 for (int ii = 0; ii < InputLength; ii++)
                 {
                     //Weight gradients
-                    WeightGradient[i, ii] = input[ii] * Maths.TanhDerriv(ZVals[i]) * Errors[i];
+                    WeightGradient[i, ii] = -1 * input[ii] * Maths.TanhDerriv(ZVals[i]) * Errors[i];
                     if (NN.UseMomentum)
                     {
                         if (NN.UseNesterov)
@@ -185,7 +185,7 @@ namespace CNN1
                 }
                 if (isoutput) { continue; }
                 //Bias gradients
-                BiasGradient[i] = Maths.TanhDerriv(ZVals[i]) * Errors[i];
+                BiasGradient[i] = -1 * Maths.TanhDerriv(ZVals[i]) * Errors[i];
                 if (NN.UseMomentum)
                 {
                     if (NN.UseNesterov)

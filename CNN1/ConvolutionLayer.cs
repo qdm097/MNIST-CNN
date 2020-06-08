@@ -107,7 +107,7 @@ namespace CNN1
                 }
             }
             //Calc gradients (errors with respect to the filter)
-            Gradients = Convolve(Maths.Convert(Errors), Input);
+            Gradients = Convolve(Maths.Convert(Maths.Scale(-1, Errors)), Input);
             if (NN.UseMomentum)
             {
                 for (int i = 0; i < KernelSize; i++)

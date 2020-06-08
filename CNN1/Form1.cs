@@ -18,7 +18,7 @@ namespace CNN1
         public static double[] image = new double[28 * 28];
         int imagespeed = 20;
         int testiterator = 0;
-        int BatchSize = 5;
+        int BatchSize = 10;
         bool Testing = false;
         public List<string> LayerTypes { get; set; }
         public List<int> LayerCounts { get; set; }
